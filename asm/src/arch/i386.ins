@@ -1,0 +1,1515 @@
+/* $Id$ */
+/* Copyright (c) 2011 Pierre Pronchery <khorben@defora.org> */
+/* This file is part of DeforaOS Devel asm */
+/* This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+
+
+
+/* platform-specific */
+#if defined(ARCH_i386_real) /* i386 in real mode */
+# define W		16
+# define uintW_t	uint16_t
+# define REG_AX_id	REG_ax_id
+# define REG_CX_id	REG_cx_id
+# define REG_DX_id	REG_dx_id
+# define REG_BX_id	REG_bx_id
+# define REG_SP_id	REG_sp_id
+# define REG_BP_id	REG_bp_id
+# define REG_SI_id	REG_si_id
+# define REG_DI_id	REG_di_id
+#else /* i386 and compatible in 32-bit protected mode */
+# define W		32
+# define uintW_t	uint32_t
+# define REG_AX_id	REG_eax_id
+# define REG_CX_id	REG_ecx_id
+# define REG_DX_id	REG_edx_id
+# define REG_BX_id	REG_ebx_id
+# define REG_SP_id	REG_esp_id
+# define REG_BP_id	REG_ebp_id
+# define REG_SI_id	REG_esi_id
+# define REG_DI_id	REG_edi_id
+#endif
+
+
+/* helpers */
+/* opcodes */
+#define OP1F		(8 << AOD_SIZE)
+#define OP2F		(16 << AOD_SIZE)
+#define OP3F		(24 << AOD_SIZE)
+
+/* operands */
+/* registers */
+#define OP_R8		AO_REGISTER(0, 8, 0)
+#define OP_R16		AO_REGISTER(0, 16, 0)
+#define OP_RW		AO_REGISTER(0, W, 0)
+#define OP_al		AO_REGISTER(AOF_IMPLICIT, REG_al_size, REG_al_id)
+#define OP_cl		AO_REGISTER(AOF_IMPLICIT, REG_cl_size, REG_cl_id)
+#define OP_dl		AO_REGISTER(AOF_IMPLICIT, REG_dl_size, REG_dl_id)
+#define OP_bl		AO_REGISTER(AOF_IMPLICIT, REG_bl_size, REG_bl_id)
+#define OP_ah		AO_REGISTER(AOF_IMPLICIT, REG_ah_size, REG_ah_id)
+#define OP_ch		AO_REGISTER(AOF_IMPLICIT, REG_ch_size, REG_ch_id)
+#define OP_dh		AO_REGISTER(AOF_IMPLICIT, REG_dh_size, REG_dh_id)
+#define OP_bh		AO_REGISTER(AOF_IMPLICIT, REG_bh_size, REG_bh_id)
+#define OP_cs		AO_REGISTER(AOF_IMPLICIT, REG_cs_size, REG_cs_id)
+#define OP_ds		AO_REGISTER(AOF_IMPLICIT, REG_ds_size, REG_ds_id)
+#define OP_es		AO_REGISTER(AOF_IMPLICIT, REG_es_size, REG_es_id)
+#define OP_fs		AO_REGISTER(AOF_IMPLICIT, REG_fs_size, REG_fs_id)
+#define OP_gs		AO_REGISTER(AOF_IMPLICIT, REG_gs_size, REG_gs_id)
+#define OP_ss		AO_REGISTER(AOF_IMPLICIT, REG_ss_size, REG_ss_id)
+#define OP_dx		AO_REGISTER(AOF_IMPLICIT, 16, REG_dx_id)
+#define OP_AX		AO_REGISTER(AOF_IMPLICIT, W, REG_AX_id)
+#define OP_CX		AO_REGISTER(AOF_IMPLICIT, W, REG_CX_id)
+#define OP_DX		AO_REGISTER(AOF_IMPLICIT, W, REG_DX_id)
+#define OP_BX		AO_REGISTER(AOF_IMPLICIT, W, REG_BX_id)
+#define OP_SP		AO_REGISTER(AOF_IMPLICIT, W, REG_SP_id)
+#define OP_BP		AO_REGISTER(AOF_IMPLICIT, W, REG_BP_id)
+#define OP_SI		AO_REGISTER(AOF_IMPLICIT, W, REG_SI_id)
+#define OP_DI		AO_REGISTER(AOF_IMPLICIT, W, REG_DI_id)
+#define OP_eax		AO_REGISTER(AOF_IMPLICIT, 32, REG_eax_id)
+#define OP_ecx		AO_REGISTER(AOF_IMPLICIT, 32, REG_ecx_id)
+#define OP_edx		AO_REGISTER(AOF_IMPLICIT, 32, REG_edx_id)
+#define OP_ebx		AO_REGISTER(AOF_IMPLICIT, 32, REG_ebx_id)
+#define OP_esp		AO_REGISTER(AOF_IMPLICIT, 32, REG_esp_id)
+#define OP_ebp		AO_REGISTER(AOF_IMPLICIT, 32, REG_ebp_id)
+#define OP_esi		AO_REGISTER(AOF_IMPLICIT, 32, REG_esi_id)
+#define OP_edi		AO_REGISTER(AOF_IMPLICIT, 32, REG_edi_id)
+#define OP_cr0		AO_REGISTER(AOF_IMPLICIT, 32, REG_cr0_id)
+#define OP_cr1		AO_REGISTER(AOF_IMPLICIT, 32, REG_cr1_id)
+#define OP_cr2		AO_REGISTER(AOF_IMPLICIT, 32, REG_cr2_id)
+#define OP_cr3		AO_REGISTER(AOF_IMPLICIT, 32, REG_cr3_id)
+#define OP_cr4		AO_REGISTER(AOF_IMPLICIT, 32, REG_cr4_id)
+#define OP_cr5		AO_REGISTER(AOF_IMPLICIT, 32, REG_cr5_id)
+#define OP_cr6		AO_REGISTER(AOF_IMPLICIT, 32, REG_cr6_id)
+#define OP_cr7		AO_REGISTER(AOF_IMPLICIT, 32, REG_cr7_id)
+#define OP_st0		AO_REGISTER(AOF_IMPLICIT, 32, REG_st0_id)
+#define OP_st1		AO_REGISTER(AOF_IMPLICIT, 32, REG_st1_id)
+#define OP_st2		AO_REGISTER(AOF_IMPLICIT, 32, REG_st2_id)
+#define OP_st3		AO_REGISTER(AOF_IMPLICIT, 32, REG_st3_id)
+#define OP_st4		AO_REGISTER(AOF_IMPLICIT, 32, REG_st4_id)
+#define OP_st5		AO_REGISTER(AOF_IMPLICIT, 32, REG_st5_id)
+#define OP_st6		AO_REGISTER(AOF_IMPLICIT, 32, REG_st6_id)
+#define OP_st7		AO_REGISTER(AOF_IMPLICIT, 32, REG_st7_id)
+
+/* mod r/m byte */
+#define AOF_I386_MODRM	0x2
+#define OP_R8_R		AO_REGISTER(AOF_I386_MODRM, 8, 0)
+#define OP_R16_R	AO_REGISTER(AOF_I386_MODRM, 16, 0)
+#define OP_RW_R		AO_REGISTER(AOF_I386_MODRM, W, 0)
+#define OP_RM8_D0	AO_DREGISTER(AOF_I386_MODRM, 0, W, 0)	/* 0x00 */
+#define OP_RM8_D8	AO_DREGISTER(AOF_I386_MODRM, 8, W, 0)	/* 0x40 */
+#define OP_RM8_DW	AO_DREGISTER(AOF_I386_MODRM, W, W, 0)	/* 0x80 */
+#define OP_RM8_R8	AO_REGISTER(AOF_I386_MODRM, 8, 0)	/* 0xc0 */
+#define OP_RM8_D0_R	AO_DREGISTER(AOF_I386_MODRM, 0, W, 8)	/* 0x00 */
+#define OP_RM8_D8_R	AO_DREGISTER(AOF_I386_MODRM, 8, W, 8)	/* 0x40 */
+#define OP_RM8_DW_R	AO_DREGISTER(AOF_I386_MODRM, W, W, 8)	/* 0x80 */
+#define OP_RM8_R8_R	AO_REGISTER(AOF_I386_MODRM, 8, 8)	/* 0xc0 */
+#define OP_RMW_D0	AO_DREGISTER(AOF_I386_MODRM, 0, W, 0)	/* 0x00 */
+#define OP_RMW_D8	AO_DREGISTER(AOF_I386_MODRM, 8, W, 0)	/* 0x40 */
+#define OP_RMW_DW	AO_DREGISTER(AOF_I386_MODRM, W, W, 0)	/* 0x80 */
+#define OP_RMW_RW	AO_REGISTER(AOF_I386_MODRM, W, 0)	/* 0xc0 */
+#define OP_RMW_D0_R	AO_DREGISTER(AOF_I386_MODRM, 0, W, 8)	/* 0x00 */
+#define OP_RMW_D8_R	AO_DREGISTER(AOF_I386_MODRM, 8, W, 8)	/* 0x40 */
+#define OP_RMW_DW_R	AO_DREGISTER(AOF_I386_MODRM, W, W, 8)	/* 0x80 */
+#define OP_RMW_RW_R	AO_REGISTER(AOF_I386_MODRM, W, 8)	/* 0xc0 */
+
+/* constant values */
+#define OP_C1		AO_CONSTANT(AOF_IMPLICIT, 8, 0x01)
+#define OP_C3		AO_CONSTANT(AOF_IMPLICIT, 8, 0x03)
+
+/* immediate values */
+#define OP_S8		AO_IMMEDIATE(AOF_SIGNED, 8, 0)
+#define OP_SW		AO_IMMEDIATE(AOF_SIGNED, W, 0)
+#define OP_SW_FUNC	AO_IMMEDIATE(AOF_SIGNED, W, AOI_REFERS_FUNCTION)
+#define OP_U8		AO_IMMEDIATE(0, 8, 0)
+#define OP_U16		AO_IMMEDIATE(0, 16, 0)
+#define OP_UW		AO_IMMEDIATE(0, W, 0)
+
+
+/* instructions */
+#ifndef ARCH_amd64
+{ "aaa",	0x37,		OP1F, AO_0()				},
+#endif
+{ "aad",	0xd50a,		OP2F, AO_0()				},
+{ "aad",	0xd5,		OP1F, AO_1(OP_U8)			},
+{ "aam",	0xd40a,		OP2F, AO_0()				},
+{ "aam",	0xd4,		OP1F, AO_1(OP_U8)			},
+#ifndef ARCH_amd64
+{ "aas",	0x3f,		OP1F, AO_0()				},
+#endif
+/* ADC		0x14 ib		1     al          imm8			*/
+{ "adc",	0x14,		OP1F, AO_2(OP_al, OP_S8)		},
+/* ADC		0x15 iW		1     AX          immW			*/
+{ "adc",	0x15,		OP1F, AO_2(OP_AX, OP_SW)		},
+/* ADC		0x10 /r		1     r/m8        r8			*/
+{ "adc",	0x10,		OP1F, AO_2(OP_RM8_D0, OP_R8_R)		},
+{ "adc",	0x10,		OP1F, AO_2(OP_RM8_D8, OP_R8_R)		},
+{ "adc",	0x10,		OP1F, AO_2(OP_RM8_DW, OP_R8_R)		},
+{ "adc",	0x10,		OP1F, AO_2(OP_RM8_R8, OP_R8_R)		},
+/* ADC		0x11 /r		1     r/mW        rW			*/
+{ "adc",	0x11,		OP1F, AO_2(OP_RMW_D0, OP_RW_R)		},
+{ "adc",	0x11,		OP1F, AO_2(OP_RMW_D8, OP_RW_R)		},
+{ "adc",	0x11,		OP1F, AO_2(OP_RMW_DW, OP_RW_R)		},
+{ "adc",	0x11,		OP1F, AO_2(OP_RMW_RW, OP_RW_R)		},
+/* ADC		0x12 /r		1     r8          r/m8			*/
+#if 1 /* FIXME doesn't work at the moment */
+{ "adc",	0x12,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_D0_R)	},
+{ "adc",	0x12,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_D8_R)	},
+{ "adc",	0x12,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_DW_R)	},
+{ "adc",	0x12,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_R8_R)	},
+#endif
+/* ADC		0x13 /r		1     rW          r/mW			*/
+#if 1 /* FIXME doesn't work at the moment */
+{ "adc",	0x13,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_D0_R)	},
+{ "adc",	0x13,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_D8_R)	},
+{ "adc",	0x13,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_DW_R)	},
+{ "adc",	0x13,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_RW_R)	},
+#endif
+/* ADC		0x80 /2 ib	1     r/m8        imm8			*/
+{ "adcb",	0x80,		OP1F, AO_2(OP_RM8_D0+2, OP_S8)		},
+{ "adcb",	0x80,		OP1F, AO_2(OP_RM8_D8+2, OP_S8)		},
+{ "adcb",	0x80,		OP1F, AO_2(OP_RM8_DW+2, OP_S8)		},
+{ "adc",	0x80,		OP1F, AO_2(OP_RM8_R8+2, OP_S8)		},
+/* ADC		0x81 /2 iW	1     r/mW        immW			*/
+{ "adc",	0x81,		OP1F, AO_2(OP_RMW_D0+2, OP_SW)		},
+{ "adc",	0x81,		OP1F, AO_2(OP_RMW_D8+2, OP_SW)		},
+{ "adc",	0x81,		OP1F, AO_2(OP_RMW_DW+2, OP_SW)		},
+{ "adc",	0x81,		OP1F, AO_2(OP_RMW_RW+2, OP_SW)		},
+/* ADC		0x83 /2 ib	1     r/mW        imm8			*/
+{ "adcb",	0x83,		OP1F, AO_2(OP_RMW_D0+2, OP_S8)		},
+{ "adcb",	0x83,		OP1F, AO_2(OP_RMW_D8+2, OP_S8)		},
+{ "adcb",	0x83,		OP1F, AO_2(OP_RMW_DW+2, OP_S8)		},
+{ "adc",	0x83,		OP1F, AO_2(OP_RMW_RW+2, OP_S8)		},
+/* ADD		0x04 ib		1     al          imm8			*/
+{ "add",	0x04,		OP1F, AO_2(OP_al, OP_S8)		},
+/* ADD		0x05 iW		1     AX          immW			*/
+{ "add",	0x05,		OP1F, AO_2(OP_AX, OP_SW)		},
+/* ADD		0x00 /r		1     r/m8        r8			*/
+{ "add",	0x00,		OP1F, AO_2(OP_RM8_D0, OP_R8_R)		},
+{ "add",	0x00,		OP1F, AO_2(OP_RM8_D8, OP_R8_R)		},
+{ "add",	0x00,		OP1F, AO_2(OP_RM8_DW, OP_R8_R)		},
+{ "add",	0x00,		OP1F, AO_2(OP_RM8_R8, OP_R8_R)		},
+/* ADD		0x01 /r		1     r/mW        rW			*/
+{ "add",	0x01,		OP1F, AO_2(OP_RMW_D0, OP_RW_R)		},
+{ "add",	0x01,		OP1F, AO_2(OP_RMW_D8, OP_RW_R)		},
+{ "add",	0x01,		OP1F, AO_2(OP_RMW_DW, OP_RW_R)		},
+{ "add",	0x01,		OP1F, AO_2(OP_RMW_RW, OP_RW_R)		},
+/* ADD		0x02 /r		1     r8          r/m8			*/
+#if 1 /* FIXME probably doesn't work at the moment */
+{ "add",	0x02,		OP1F, AO_2(OP_R8_R, OP_RM8_D0_R)	},
+{ "add",	0x02,		OP1F, AO_2(OP_R8_R, OP_RM8_D8_R)	},
+{ "add",	0x02,		OP1F, AO_2(OP_R8_R, OP_RM8_DW_R)	},
+{ "add",	0x02,		OP1F, AO_2(OP_R8_R, OP_RM8_R8_R)	},
+#endif
+/* ADD		0x03 /r		1     rW          r/mW			*/
+#if 1 /* FIXME probably doesn't work at the moment */
+{ "add",	0x03,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_D0_R)	},
+{ "add",	0x03,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_D8_R)	},
+{ "add",	0x03,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_DW_R)	},
+{ "add",	0x03,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_RW_R)	},
+#endif
+/* ADD		0x80 /0 ib	1     r/m8        imm8			*/
+{ "addb",	0x80,		OP1F, AO_2(OP_RM8_D0+0, OP_S8)		},
+{ "addb",	0x80,		OP1F, AO_2(OP_RM8_D8+0, OP_S8)		},
+{ "addb",	0x80,		OP1F, AO_2(OP_RM8_DW+0, OP_S8)		},
+{ "add",	0x80,		OP1F, AO_2(OP_RM8_R8+0, OP_S8)		},
+/* ADD		0x81 /0 iW	1     r/mW        immW			*/
+{ "add",	0x81,		OP1F, AO_2(OP_RMW_D0+0, OP_SW)		},
+{ "add",	0x81,		OP1F, AO_2(OP_RMW_D8+0, OP_SW)		},
+{ "add",	0x81,		OP1F, AO_2(OP_RMW_DW+0, OP_SW)		},
+{ "add",	0x81,		OP1F, AO_2(OP_RMW_RW+0, OP_SW)		},
+/* ADD		0x83 /0 ib	1     r/mW        imm8			*/
+{ "addb",	0x83,		OP1F, AO_2(OP_RMW_D0+0, OP_S8)		},
+{ "addb",	0x83,		OP1F, AO_2(OP_RMW_D8+0, OP_S8)		},
+{ "addb",	0x83,		OP1F, AO_2(OP_RMW_DW+0, OP_S8)		},
+{ "add",	0x83,		OP1F, AO_2(OP_RMW_RW+0, OP_S8)		},
+/* ADDRSIZE	0x67		1					*/
+{ "addrsize",	0x67,		OP1F, AO_0()				},
+/* AND		0x24 ib		1     al          imm8			*/
+{ "and",	0x24,		OP1F, AO_2(OP_al, OP_S8)		},
+/* AND		0x25 iW		1     AX          immW			*/
+{ "and",	0x25,		OP1F, AO_2(OP_AX, OP_SW)		},
+/* AND		0x20 /r		1     r/m8        r8			*/
+{ "and",	0x20,		OP1F, AO_2(OP_RM8_D0, OP_R8_R)		},
+{ "and",	0x20,		OP1F, AO_2(OP_RM8_D8, OP_R8_R)		},
+{ "and",	0x20,		OP1F, AO_2(OP_RM8_DW, OP_R8_R)		},
+{ "and",	0x20,		OP1F, AO_2(OP_RM8_R8, OP_R8_R)		},
+/* AND		0x21 /r		1     r/mW        rW			*/
+{ "and",	0x21,		OP1F, AO_2(OP_RMW_D0, OP_RW_R)		},
+{ "and",	0x21,		OP1F, AO_2(OP_RMW_D8, OP_RW_R)		},
+{ "and",	0x21,		OP1F, AO_2(OP_RMW_DW, OP_RW_R)		},
+{ "and",	0x21,		OP1F, AO_2(OP_RMW_RW, OP_RW_R)		},
+/* AND		0x22 /r		1     r8          r/m8			*/
+#if 1 /* FIXME probably doesn't work at the moment */
+{ "and",	0x22,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_D0_R)	},
+{ "and",	0x22,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_D8_R)	},
+{ "and",	0x22,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_DW_R)	},
+{ "and",	0x22,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_R8_R)	},
+#endif
+/* AND		0x23 /r		1     rW          r/mW			*/
+#if 1 /* FIXME probably doesn't work at the moment */
+{ "and",	0x23,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_D0_R)	},
+{ "and",	0x23,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_D8_R)	},
+{ "and",	0x23,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_DW_R)	},
+{ "and",	0x23,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_RW_R)	},
+#endif
+/* AND		0x80 /0 ib	1     r/m8        imm8			*/
+{ "andb",	0x80,		OP1F, AO_2(OP_RM8_D0+4, OP_S8)		},
+{ "andb",	0x80,		OP1F, AO_2(OP_RM8_D8+4, OP_S8)		},
+{ "andb",	0x80,		OP1F, AO_2(OP_RM8_DW+4, OP_S8)		},
+{ "and",	0x80,		OP1F, AO_2(OP_RM8_R8+4, OP_S8)		},
+/* AND		0x81 /0 iW	1     r/mW        immW			*/
+{ "and",	0x81,		OP1F, AO_2(OP_RMW_D0+4, OP_SW)		},
+{ "and",	0x81,		OP1F, AO_2(OP_RMW_D8+4, OP_SW)		},
+{ "and",	0x81,		OP1F, AO_2(OP_RMW_DW+4, OP_SW)		},
+{ "and",	0x81,		OP1F, AO_2(OP_RMW_RW+4, OP_SW)		},
+/* AND		0x83 /0 ib	1     r/mW        imm8			*/
+{ "andb",	0x83,		OP1F, AO_2(OP_RMW_D0+4, OP_S8)		},
+{ "andb",	0x83,		OP1F, AO_2(OP_RMW_D8+4, OP_S8)		},
+{ "andb",	0x83,		OP1F, AO_2(OP_RMW_DW+4, OP_S8)		},
+{ "and",	0x83,		OP1F, AO_2(OP_RMW_RW+4, OP_S8)		},
+/* ARPL */
+/* FIXME implement */
+/* BOUND */
+/* FIXME implement */
+/* BSF		0x0fbc		2     rW          r/mW			*/
+#if 1 /* FIXME doesn't work at the moment */
+{ "bsf",	0x0fbc,		OP2F, AO_2(OP_RMW_RW_R, OP_RMW_D0_R)	},
+{ "bsf",	0x0fbc,		OP2F, AO_2(OP_RMW_RW_R, OP_RMW_D8_R)	},
+{ "bsf",	0x0fbc,		OP2F, AO_2(OP_RMW_RW_R, OP_RMW_DW_R)	},
+{ "bsf",	0x0fbc,		OP2F, AO_2(OP_RMW_RW_R, OP_RMW_RW_R)	},
+#endif
+/* BSR		0x0fbd		2     rW          r/mW			*/
+#if 1 /* FIXME doesn't work at the moment */
+{ "bsr",	0x0fbd,		OP2F, AO_2(OP_RMW_RW_R, OP_RMW_D0_R)	},
+{ "bsr",	0x0fbd,		OP2F, AO_2(OP_RMW_RW_R, OP_RMW_D8_R)	},
+{ "bsr",	0x0fbd,		OP2F, AO_2(OP_RMW_RW_R, OP_RMW_DW_R)	},
+{ "bsr",	0x0fbd,		OP2F, AO_2(OP_RMW_RW_R, OP_RMW_RW_R)	},
+#endif
+/* BT		0x0fa3		2     r/mW        rW			*/
+{ "bt",		0x0fa3,		OP2F, AO_2(OP_RMW_D0, OP_RW_R)		},
+{ "bt",		0x0fa3,		OP2F, AO_2(OP_RMW_D8, OP_RW_R)		},
+{ "bt",		0x0fa3,		OP2F, AO_2(OP_RMW_DW, OP_RW_R)		},
+{ "bt",		0x0fa3,		OP2F, AO_2(OP_RMW_RW, OP_RW_R)		},
+/* BT		0x0fba /4 ib	2     r/mW        imm8			*/
+{ "bt",		0x0fba,		OP2F, AO_2(OP_RMW_D0+4, OP_S8)		},
+{ "bt",		0x0fba,		OP2F, AO_2(OP_RMW_D8+4, OP_S8)		},
+{ "bt",		0x0fba,		OP2F, AO_2(OP_RMW_DW+4, OP_S8)		},
+{ "bt",		0x0fba,		OP2F, AO_2(OP_RMW_RW+4, OP_S8)		},
+/* BTC		0x0fbb		2     r/mW        rW			*/
+{ "btc",	0x0fbb,		OP2F, AO_2(OP_RMW_D0, OP_RW_R)		},
+{ "btc",	0x0fbb,		OP2F, AO_2(OP_RMW_D8, OP_RW_R)		},
+{ "btc",	0x0fbb,		OP2F, AO_2(OP_RMW_DW, OP_RW_R)		},
+{ "btc",	0x0fbb,		OP2F, AO_2(OP_RMW_RW, OP_RW_R)		},
+/* BTC		0x0fba /7 ib	2     r/mW        imm8			*/
+{ "btc",	0x0fba,		OP2F, AO_2(OP_RMW_D0+7, OP_S8)		},
+{ "btc",	0x0fba,		OP2F, AO_2(OP_RMW_D8+7, OP_S8)		},
+{ "btc",	0x0fba,		OP2F, AO_2(OP_RMW_DW+7, OP_S8)		},
+{ "btc",	0x0fba,		OP2F, AO_2(OP_RMW_RW+7, OP_S8)		},
+/* BTR		0x0fb3		2     r/mW        rW			*/
+{ "btr",	0x0fb3,		OP2F, AO_2(OP_RMW_D0, OP_RW_R)		},
+{ "btr",	0x0fb3,		OP2F, AO_2(OP_RMW_D8, OP_RW_R)		},
+{ "btr",	0x0fb3,		OP2F, AO_2(OP_RMW_DW, OP_RW_R)		},
+{ "btr",	0x0fb3,		OP2F, AO_2(OP_RMW_RW, OP_RW_R)		},
+/* BTR		0x0fba /6 ib	2     r/mW        imm8			*/
+{ "btr",	0x0fba,		OP2F, AO_2(OP_RMW_D0+6, OP_S8)		},
+{ "btr",	0x0fba,		OP2F, AO_2(OP_RMW_D8+6, OP_S8)		},
+{ "btr",	0x0fba,		OP2F, AO_2(OP_RMW_DW+6, OP_S8)		},
+{ "btr",	0x0fba,		OP2F, AO_2(OP_RMW_RW+6, OP_S8)		},
+/* BTS		0x0fab		2     r/mW        rW			*/
+{ "bts",	0x0fab,		OP2F, AO_2(OP_RMW_D0, OP_RW_R)		},
+{ "bts",	0x0fab,		OP2F, AO_2(OP_RMW_D8, OP_RW_R)		},
+{ "bts",	0x0fab,		OP2F, AO_2(OP_RMW_DW, OP_RW_R)		},
+{ "bts",	0x0fab,		OP2F, AO_2(OP_RMW_RW, OP_RW_R)		},
+/* BTS		0x0fba /5 ib	2     r/mW        imm8			*/
+{ "bts",	0x0fba,		OP2F, AO_2(OP_RMW_D0+5, OP_S8)		},
+{ "bts",	0x0fba,		OP2F, AO_2(OP_RMW_D8+5, OP_S8)		},
+{ "bts",	0x0fba,		OP2F, AO_2(OP_RMW_DW+5, OP_S8)		},
+{ "bts",	0x0fba,		OP2F, AO_2(OP_RMW_RW+5, OP_S8)		},
+/* CALL */
+{ "call",	0xe8,		OP1F, AO_1(OP_SW_FUNC)			},
+/* FIXME implement */
+#if defined(ARCH_i386_real)
+/* CBW		0x98		1					*/
+{ "cbw",	0x98,		OP1F, AO_0()				},
+#else
+/* CWDE		0x98		1					*/
+{ "cwde",	0x98,		OP1F, AO_0()				},
+#endif
+/* CLC		0xf8		1					*/
+{ "clc",	0xf8,		OP1F, AO_0()				},
+/* CLD		0xfc		1					*/
+{ "cld",	0xfc,		OP1F, AO_0()				},
+/* CLI		0xfa		1					*/
+{ "cli",	0xfa,		OP1F, AO_0()				},
+/* CLTS		0xfa		2					*/
+{ "clts",	0x0f06,		OP2F, AO_0()				},
+/* CMC		0xf5		1					*/
+{ "cmc",	0xf5,		OP1F, AO_0()				},
+/* CMOVcc								*/
+/* FIXME implement */
+/* CMP		0x38 /r		1     r/m8        r8			*/
+{ "cmp",	0x38,		OP1F, AO_2(OP_RM8_D0, OP_R8_R)		},
+{ "cmp",	0x38,		OP1F, AO_2(OP_RM8_D8, OP_R8_R)		},
+{ "cmp",	0x38,		OP1F, AO_2(OP_RM8_DW, OP_R8_R)		},
+{ "cmp",	0x38,		OP1F, AO_2(OP_RM8_R8, OP_R8_R)		},
+/* CMP		0x39 /r		1     r/mW        rW			*/
+{ "cmp",	0x39,		OP1F, AO_2(OP_RMW_D0, OP_RW_R)		},
+{ "cmp",	0x39,		OP1F, AO_2(OP_RMW_D8, OP_RW_R)		},
+{ "cmp",	0x39,		OP1F, AO_2(OP_RMW_DW, OP_RW_R)		},
+{ "cmp",	0x39,		OP1F, AO_2(OP_RMW_RW, OP_RW_R)		},
+/* CMP		0x3a /r		1     r8          r/m8			*/
+{ "cmp",	0x3a,		OP1F, AO_2(OP_R8_R, OP_RM8_D0)		},
+{ "cmp",	0x3a,		OP1F, AO_2(OP_R8_R, OP_RM8_D8)		},
+{ "cmp",	0x3a,		OP1F, AO_2(OP_R8_R, OP_RM8_DW)		},
+{ "cmp",	0x3a,		OP1F, AO_2(OP_R8_R, OP_RM8_R8)		},
+/* CMP		0x3b /r		1     rW          r/mW			*/
+{ "cmp",	0x3b,		OP1F, AO_2(OP_RW_R, OP_RMW_D0)		},
+{ "cmp",	0x3b,		OP1F, AO_2(OP_RW_R, OP_RMW_D8)		},
+{ "cmp",	0x3b,		OP1F, AO_2(OP_RW_R, OP_RMW_DW)		},
+{ "cmp",	0x3b,		OP1F, AO_2(OP_RW_R, OP_RMW_RW)		},
+/* CMP		0x3c		1     al          imm8			*/
+{ "cmp",	0x3c,		OP1F, AO_2(OP_al, OP_U8)		},
+/* CMP		0x3d		1     AX          immW			*/
+{ "cmp",	0x3d,		OP1F, AO_2(OP_AX, OP_UW)		},
+/* FIXME implement the rest */
+#if defined(ARCH_i386_real)
+/* CWD		0x99		1					*/
+{ "cwd",	0x99,		OP1F, AO_0()				},
+#else
+/* CDQ		0x99		1					*/
+{ "cdq",	0x99,		OP1F, AO_0()				},
+#endif
+/* CS		0x2e		1					*/
+{ "cs",		0x2e,		OP1F, AO_0()				},
+#ifndef ARCH_amd64
+/* DAA		0x27		1					*/
+{ "daa",	0x27,		OP1F, AO_0()				},
+#endif
+#ifndef ARCH_amd64
+/* DAS		0x2f		1					*/
+{ "das",	0x2f,		OP1F, AO_0()				},
+#endif
+#ifndef ARCH_amd64
+/* DEC		0x48 +rd	1					*/
+{ "dec",	0x48,		OP1F, AO_1(OP_AX)			},
+{ "dec",	0x49,		OP1F, AO_1(OP_CX)			},
+{ "dec",	0x4a,		OP1F, AO_1(OP_DX)			},
+{ "dec",	0x4b,		OP1F, AO_1(OP_BX)			},
+{ "dec",	0x4c,		OP1F, AO_1(OP_SP)			},
+{ "dec",	0x4d,		OP1F, AO_1(OP_BP)			},
+{ "dec",	0x4e,		OP1F, AO_1(OP_SI)			},
+{ "dec",	0x4f,		OP1F, AO_1(OP_DI)			},
+#endif
+/* DEC		0xfe /1		1     r/m8				*/
+{ "decb",	0xfe,		OP1F, AO_1(OP_RM8_D0+1)			},
+{ "decb",	0xfe,		OP1F, AO_1(OP_RM8_D8+1)			},
+{ "decb",	0xfe,		OP1F, AO_1(OP_RM8_DW+1)			},
+{ "dec",	0xfe,		OP1F, AO_1(OP_RM8_R8+1)			},
+/* DEC		0xff /1		1     r/mW				*/
+{ "dec",	0xff,		OP1F, AO_1(OP_RMW_D0+1)			},
+{ "dec",	0xff,		OP1F, AO_1(OP_RMW_D8+1)			},
+{ "dec",	0xff,		OP1F, AO_1(OP_RMW_DW+1)			},
+{ "dec",	0xff,		OP1F, AO_1(OP_RMW_RW+1)			},
+/* DIV		0xf6 /6		1     r/m8				*/
+{ "divb",	0xf6,		OP1F, AO_1(OP_RM8_D0+6)			},
+{ "divb",	0xf6,		OP1F, AO_1(OP_RM8_D8+6)			},
+{ "divb",	0xf6,		OP1F, AO_1(OP_RM8_DW+6)			},
+{ "div",	0xf6,		OP1F, AO_1(OP_RM8_R8+6)			},
+/* DIV		0xf7 /6		1     r/mW				*/
+{ "div",	0xf7,		OP1F, AO_1(OP_RMW_D0+6)			},
+{ "div",	0xf7,		OP1F, AO_1(OP_RMW_D8+6)			},
+{ "div",	0xf7,		OP1F, AO_1(OP_RMW_DW+6)			},
+{ "div",	0xf7,		OP1F, AO_1(OP_RMW_RW+6)			},
+/* ENTER	0xc8 iw		1     imm16       imm8			*/
+{ "enter",	0xc8,		OP1F, AO_2(OP_U16, OP_U8)		},
+/* ES		0x26		1					*/
+{ "es",		0x26,		OP1F, AO_0()				},
+/* F2XM1	0xd9f0		2					*/
+{ "f2xm1",	0xd9f0,		OP2F, AO_0()				},
+/* FABS		0xd9e1		2					*/
+{ "fabs",	0xd9e1,		OP2F, AO_0()				},
+/* FADD		0xd8 /0		1     m32real				*/
+/* FIXME implement */
+/* FADD		0xdc /0		1     m64real				*/
+/* FIXME implement */
+/* FADD		0xd8c0 +i	2     st(0)       st(i)			*/
+{ "fadd",	0xd8c0,		OP2F, AO_2(OP_st0, OP_st0)		},
+{ "fadd",	0xd8c1,		OP2F, AO_2(OP_st0, OP_st1)		},
+{ "fadd",	0xd8c2,		OP2F, AO_2(OP_st0, OP_st2)		},
+{ "fadd",	0xd8c3,		OP2F, AO_2(OP_st0, OP_st3)		},
+{ "fadd",	0xd8c4,		OP2F, AO_2(OP_st0, OP_st4)		},
+{ "fadd",	0xd8c5,		OP2F, AO_2(OP_st0, OP_st5)		},
+{ "fadd",	0xd8c6,		OP2F, AO_2(OP_st0, OP_st6)		},
+{ "fadd",	0xd8c7,		OP2F, AO_2(OP_st0, OP_st7)		},
+/* FADD		0xdcc0 +i	2     st(i)       st(0)			*/
+{ "fadd",	0xdcc0,		OP2F, AO_2(OP_st0, OP_st0)		},
+{ "fadd",	0xdcc1,		OP2F, AO_2(OP_st1, OP_st0)		},
+{ "fadd",	0xdcc2,		OP2F, AO_2(OP_st2, OP_st0)		},
+{ "fadd",	0xdcc3,		OP2F, AO_2(OP_st3, OP_st0)		},
+{ "fadd",	0xdcc4,		OP2F, AO_2(OP_st4, OP_st0)		},
+{ "fadd",	0xdcc5,		OP2F, AO_2(OP_st5, OP_st0)		},
+{ "fadd",	0xdcc6,		OP2F, AO_2(OP_st6, OP_st0)		},
+{ "fadd",	0xdcc7,		OP2F, AO_2(OP_st7, OP_st0)		},
+/* FADDP	0xdec1		2					*/
+{ "faddp",	0xdec1,		OP2F, AO_0()				},
+/* FADDP	0xdec0 +i	2     st(i)       st(0)			*/
+{ "faddp",	0xdec0,		OP2F, AO_2(OP_st0, OP_st0)		},
+{ "faddp",	0xdec1,		OP2F, AO_2(OP_st1, OP_st0)		},
+{ "faddp",	0xdec2,		OP2F, AO_2(OP_st2, OP_st0)		},
+{ "faddp",	0xdec3,		OP2F, AO_2(OP_st3, OP_st0)		},
+{ "faddp",	0xdec4,		OP2F, AO_2(OP_st4, OP_st0)		},
+{ "faddp",	0xdec5,		OP2F, AO_2(OP_st5, OP_st0)		},
+{ "faddp",	0xdec6,		OP2F, AO_2(OP_st6, OP_st0)		},
+{ "faddp",	0xdec7,		OP2F, AO_2(OP_st7, OP_st0)		},
+/* FBLD		0xdf /4		1     m80dec				*/
+/* FIXME implement */
+/* FBSTP	0xdf /6		1     m80bcd				*/
+/* FIXME implement */
+/* FCHS		0xd9e0		2					*/
+{ "fchs",	0xd9e0,		OP2F, AO_0()			   },
+/* FCLEX	0x9bdbe2	3					*/
+{ "fclex",	0x9bdbe2,	OP3F, AO_0()				},
+/* FCMOVcc								*/
+/* FIXME implement */
+/* FCOM									*/
+/* FIXME implement */
+/* FCOM		0xd8d1		2					*/
+{ "fcom",	0xd8d1,		OP2F, AO_0()				},
+/* FCOM		0xd8d0 +i	2     st(i)				*/
+{ "fcom",	0xd8d0,		OP2F, AO_1(OP_st0)			},
+{ "fcom",	0xd8d1,		OP2F, AO_1(OP_st1)			},
+{ "fcom",	0xd8d2,		OP2F, AO_1(OP_st2)			},
+{ "fcom",	0xd8d3,		OP2F, AO_1(OP_st3)			},
+{ "fcom",	0xd8d4,		OP2F, AO_1(OP_st4)			},
+{ "fcom",	0xd8d5,		OP2F, AO_1(OP_st5)			},
+{ "fcom",	0xd8d6,		OP2F, AO_1(OP_st6)			},
+{ "fcom",	0xd8d7,		OP2F, AO_1(OP_st7)			},
+/* FCOMP	0xd8d9		2					*/
+{ "fcomp",	0xd8d9,		OP2F, AO_0()				},
+/* FCOMP	0xd8d8 +i	2     st(i)				*/
+{ "fcomp",	0xd8d8,		OP2F, AO_1(OP_st0)			},
+{ "fcomp",	0xd8d9,		OP2F, AO_1(OP_st1)			},
+{ "fcomp",	0xd8da,		OP2F, AO_1(OP_st2)			},
+{ "fcomp",	0xd8db,		OP2F, AO_1(OP_st3)			},
+{ "fcomp",	0xd8dc,		OP2F, AO_1(OP_st4)			},
+{ "fcomp",	0xd8dd,		OP2F, AO_1(OP_st5)			},
+{ "fcomp",	0xd8de,		OP2F, AO_1(OP_st6)			},
+{ "fcomp",	0xd8df,		OP2F, AO_1(OP_st7)			},
+/* FCOMPP	0xded9		2					*/
+{ "fcompp",	0xded9,		OP2F, AO_0()				},
+/* FCOS		0xd9ff		2					*/
+{ "fcos",	0xd9ff,		OP2F, AO_0()				},
+/* FDECSTP	0xd9f6		2					*/
+{ "fdecstp",	0xd9f6,		OP2F, AO_0()				},
+/* FDIV	0xd8 /6			1     m32real				*/
+/* FIXME implement */
+/* FDIV	0xdc /6			1     m64real				*/
+/* FIXME implement */
+/* FDIV	0xd8f0 +i		2     st(0)       st(i)			*/
+{ "fdiv",	0xd8f0,		OP2F, AO_2(OP_st0, OP_st0)		},
+{ "fdiv",	0xd8f1,		OP2F, AO_2(OP_st0, OP_st1)		},
+{ "fdiv",	0xd8f2,		OP2F, AO_2(OP_st0, OP_st2)		},
+{ "fdiv",	0xd8f3,		OP2F, AO_2(OP_st0, OP_st3)		},
+{ "fdiv",	0xd8f4,		OP2F, AO_2(OP_st0, OP_st4)		},
+{ "fdiv",	0xd8f5,		OP2F, AO_2(OP_st0, OP_st5)		},
+{ "fdiv",	0xd8f6,		OP2F, AO_2(OP_st0, OP_st6)		},
+{ "fdiv",	0xd8f7,		OP2F, AO_2(OP_st0, OP_st7)		},
+/* FDIV	0xdcf8 +i		2     st(0)       st(i)			*/
+{ "fdiv",	0xdcf8,		OP2F, AO_2(OP_st0, OP_st0)		},
+{ "fdiv",	0xdcf9,		OP2F, AO_2(OP_st1, OP_st0)		},
+{ "fdiv",	0xdcfa,		OP2F, AO_2(OP_st2, OP_st0)		},
+{ "fdiv",	0xdcfb,		OP2F, AO_2(OP_st3, OP_st0)		},
+{ "fdiv",	0xdcfc,		OP2F, AO_2(OP_st4, OP_st0)		},
+{ "fdiv",	0xdcfd,		OP2F, AO_2(OP_st5, OP_st0)		},
+{ "fdiv",	0xdcfe,		OP2F, AO_2(OP_st6, OP_st0)		},
+{ "fdiv",	0xdcff,		OP2F, AO_2(OP_st7, OP_st0)		},
+/* FDIVP	0xdef9		2					*/
+{ "fdivp",	0xdef9,		OP2F, AO_0()				},
+/* FDIVP	0xdef8 +i	2     st(0)       st(i)			*/
+{ "fdivp",	0xdef8,		OP2F, AO_2(OP_st0, OP_st0)		},
+{ "fdivp",	0xdef9,		OP2F, AO_2(OP_st1, OP_st0)		},
+{ "fdivp",	0xdefa,		OP2F, AO_2(OP_st2, OP_st0)		},
+{ "fdivp",	0xdefb,		OP2F, AO_2(OP_st3, OP_st0)		},
+{ "fdivp",	0xdefc,		OP2F, AO_2(OP_st4, OP_st0)		},
+{ "fdivp",	0xdefd,		OP2F, AO_2(OP_st5, OP_st0)		},
+{ "fdivp",	0xdefe,		OP2F, AO_2(OP_st6, OP_st0)		},
+{ "fdivp",	0xdeff,		OP2F, AO_2(OP_st7, OP_st0)		},
+/* FDIVR	0xd8 /7		1     m32real				*/
+/* FIXME implement */
+/* FDIVR	0xdc /7		1     m64real				*/
+/* FIXME implement */
+/* FDIVR	0xd8f8 +i	2     st(0)       st(i)			*/
+{ "fdivr",	0xd8f8,		OP2F, AO_2(OP_st0, OP_st0)		},
+{ "fdivr",	0xd8f9,		OP2F, AO_2(OP_st0, OP_st1)		},
+{ "fdivr",	0xd8fa,		OP2F, AO_2(OP_st0, OP_st2)		},
+{ "fdivr",	0xd8fb,		OP2F, AO_2(OP_st0, OP_st3)		},
+{ "fdivr",	0xd8fc,		OP2F, AO_2(OP_st0, OP_st4)		},
+{ "fdivr",	0xd8fd,		OP2F, AO_2(OP_st0, OP_st5)		},
+{ "fdivr",	0xd8fe,		OP2F, AO_2(OP_st0, OP_st6)		},
+{ "fdivr",	0xd8ff,		OP2F, AO_2(OP_st0, OP_st7)		},
+/* FDIVR	0xdcf0 +i	2     st(0)       st(i)			*/
+{ "fdivr",	0xdcf0,		OP2F, AO_2(OP_st0, OP_st0)		},
+{ "fdivr",	0xdcf1,		OP2F, AO_2(OP_st1, OP_st0)		},
+{ "fdivr",	0xdcf2,		OP2F, AO_2(OP_st2, OP_st0)		},
+{ "fdivr",	0xdcf3,		OP2F, AO_2(OP_st3, OP_st0)		},
+{ "fdivr",	0xdcf4,		OP2F, AO_2(OP_st4, OP_st0)		},
+{ "fdivr",	0xdcf5,		OP2F, AO_2(OP_st5, OP_st0)		},
+{ "fdivr",	0xdcf6,		OP2F, AO_2(OP_st6, OP_st0)		},
+{ "fdivr",	0xdcf7,		OP2F, AO_2(OP_st7, OP_st0)		},
+/* FDIVRP	0xdef1		2					*/
+{ "fdivrp",	0xdef1,		OP2F, AO_0()				},
+/* FDIVRP	0xdef0 +i	2     st(0)       st(i)			*/
+{ "fdivrp",	0xdef0,		OP2F, AO_2(OP_st0, OP_st0)		},
+{ "fdivrp",	0xdef1,		OP2F, AO_2(OP_st1, OP_st0)		},
+{ "fdivrp",	0xdef2,		OP2F, AO_2(OP_st2, OP_st0)		},
+{ "fdivrp",	0xdef3,		OP2F, AO_2(OP_st3, OP_st0)		},
+{ "fdivrp",	0xdef4,		OP2F, AO_2(OP_st4, OP_st0)		},
+{ "fdivrp",	0xdef5,		OP2F, AO_2(OP_st5, OP_st0)		},
+{ "fdivrp",	0xdef6,		OP2F, AO_2(OP_st6, OP_st0)		},
+{ "fdivrp",	0xdef7,		OP2F, AO_2(OP_st7, OP_st0)		},
+/* FFREE	0xddc0 +i	2     st(i)				*/
+{ "ffree",	0xddc0,		OP2F, AO_1(OP_st0)			},
+{ "ffree",	0xddc1,		OP2F, AO_1(OP_st1)			},
+{ "ffree",	0xddc2,		OP2F, AO_1(OP_st2)			},
+{ "ffree",	0xddc3,		OP2F, AO_1(OP_st3)			},
+{ "ffree",	0xddc4,		OP2F, AO_1(OP_st4)			},
+{ "ffree",	0xddc5,		OP2F, AO_1(OP_st5)			},
+{ "ffree",	0xddc6,		OP2F, AO_1(OP_st6)			},
+{ "ffree",	0xddc7,		OP2F, AO_1(OP_st7)			},
+/* FIADD	0xda /0		1     m32int				*/
+/* FIXME implement */
+/* FIADD	0xde /0		1     m64int				*/
+/* FIXME implement */
+/* FIDIVR	0xda /7		1     m32int				*/
+/* FIXME implement */
+/* FIDIVR	0xde /7		1     m64int				*/
+/* FIXME implement */
+/* FILD		0xdf /0		1     m16int				*/
+/* FIXME implement */
+/* FILD		0xdb /0		1     m32int				*/
+/* FIXME implement */
+/* FILD		0xdf /5		1     m64int				*/
+/* FIXME implement */
+/* FINCSTP	0xd9f7		2					*/
+{ "fincstp",	0xd9f7,		OP3F, AO_0()				},
+/* FINIT	0x9bdbe3	3					*/
+{ "finit",	0x9bdbe3,	OP3F, AO_0()				},
+/* FIST		0xdf /2		1     m16int				*/
+/* FIXME implement */
+/* FIST		0xdb /2		1     m32int				*/
+/* FIXME implement */
+/* FISTP	0xdf /3		1     m16int				*/
+/* FIXME implement */
+/* FISTP	0xdb /3		1     m32int				*/
+/* FIXME implement */
+/* FISTP	0xdf /7		1     m64int				*/
+/* FIXME implement */
+/* FLD		0xd9 /0		1     m32real				*/
+/* FIXME implement */
+/* FLD		0xdd /0		1     m64real				*/
+/* FIXME implement */
+/* FLD		0xdb /5		1     m80real				*/
+/* FIXME implement */
+/* FLD		0xd9c0 +i	2     st(i)				*/
+{ "fld",	0xd9c0,		OP2F, AO_1(OP_st0)			},
+{ "fld",	0xd9c1,		OP2F, AO_1(OP_st1)			},
+{ "fld",	0xd9c2,		OP2F, AO_1(OP_st2)			},
+{ "fld",	0xd9c3,		OP2F, AO_1(OP_st3)			},
+{ "fld",	0xd9c4,		OP2F, AO_1(OP_st4)			},
+{ "fld",	0xd9c5,		OP2F, AO_1(OP_st5)			},
+{ "fld",	0xd9c6,		OP2F, AO_1(OP_st6)			},
+{ "fld",	0xd9c7,		OP2F, AO_1(OP_st7)			},
+/* FLD1		0xd9e8		2					*/
+{ "fld1",	0xd9e8,		OP2F, AO_0()				},
+/* FLDL2E	0xd9ea		2					*/
+{ "fld2e",	0xd9ea,		OP2F, AO_0()				},
+/* FLDL2T	0xd9e9		2					*/
+{ "fld2t",	0xd9e9,		OP2F, AO_0()				},
+/* FLDLG2	0xd9ec		2					*/
+{ "fldg2",	0xd9ec,		OP2F, AO_0()				},
+/* FLDLN2	0xd9ed		2					*/
+{ "fldn2",	0xd9ed,		OP2F, AO_0()				},
+/* FLDPI	0xd9eb		2					*/
+{ "fldpi",	0xd9eb,		OP2F, AO_0()				},
+/* FLDZ		0xd9ee		2					*/
+{ "fldz",	0xd9ee,		OP2F, AO_0()				},
+/* FMUL		0xd8c8 +i	2     st(0)       st(i)			*/
+{ "fmul",	0xd8c8,		OP2F, AO_2(OP_st0, OP_st0)		},
+{ "fmul",	0xd8c9,		OP2F, AO_2(OP_st0, OP_st1)		},
+{ "fmul",	0xd8ca,		OP2F, AO_2(OP_st0, OP_st2)		},
+{ "fmul",	0xd8cb,		OP2F, AO_2(OP_st0, OP_st3)		},
+{ "fmul",	0xd8cc,		OP2F, AO_2(OP_st0, OP_st4)		},
+{ "fmul",	0xd8cd,		OP2F, AO_2(OP_st0, OP_st5)		},
+{ "fmul",	0xd8ce,		OP2F, AO_2(OP_st0, OP_st6)		},
+{ "fmul",	0xd8cf,		OP2F, AO_2(OP_st0, OP_st7)		},
+/* FMUL		0xdcc8 +i	2     st(i)       st(0)			*/
+{ "fmul",	0xdcc8,		OP2F, AO_2(OP_st0, OP_st0)		},
+{ "fmul",	0xdcc9,		OP2F, AO_2(OP_st1, OP_st0)		},
+{ "fmul",	0xdcca,		OP2F, AO_2(OP_st2, OP_st0)		},
+{ "fmul",	0xdccb,		OP2F, AO_2(OP_st3, OP_st0)		},
+{ "fmul",	0xdccc,		OP2F, AO_2(OP_st4, OP_st0)		},
+{ "fmul",	0xdccd,		OP2F, AO_2(OP_st5, OP_st0)		},
+{ "fmul",	0xdcce,		OP2F, AO_2(OP_st6, OP_st0)		},
+{ "fmul",	0xdccf,		OP2F, AO_2(OP_st7, OP_st0)		},
+/* FMULP	0xdec9		2					*/
+{ "fmulp",	0xdec9,		OP2F, AO_0()				},
+/* FMULP	0xdec8 +i	2     st(i)       st(0)			*/
+{ "fmulp",	0xdec8,		OP2F, AO_2(OP_st0, OP_st0)		},
+{ "fmulp",	0xdec9,		OP2F, AO_2(OP_st1, OP_st0)		},
+{ "fmulp",	0xdeca,		OP2F, AO_2(OP_st2, OP_st0)		},
+{ "fmulp",	0xdecb,		OP2F, AO_2(OP_st3, OP_st0)		},
+{ "fmulp",	0xdecc,		OP2F, AO_2(OP_st4, OP_st0)		},
+{ "fmulp",	0xdecd,		OP2F, AO_2(OP_st5, OP_st0)		},
+{ "fmulp",	0xdece,		OP2F, AO_2(OP_st6, OP_st0)		},
+{ "fmulp",	0xdecf,		OP2F, AO_2(OP_st7, OP_st0)		},
+/* FNCLEX	0xdbe2		2					*/
+{ "fnclex",	0xdbe2,		OP2F, AO_0()				},
+/* FNINIT	0xdbe3		2					*/
+{ "fninit",	0xdbe3,		OP2F, AO_0()				},
+/* FNOP		0xd9d0		2					*/
+{ "fnop",	0xd9d0,		OP2F, AO_0()				},
+/* FS		0x64		1					*/
+{ "fs",		0x64,		OP1F, AO_0()				},
+/* FWAIT	0x9b		1					*/
+{ "fwait",	0x9b,		OP1F, AO_0()				},
+/* FYL2XP1	0xd9f9		2					*/
+{ "fyl2xp1",	0xd9f9,		OP2F, AO_0()				},
+/* GS		0x65		1					*/
+{ "gs",		0x65,		OP1F, AO_0()				},
+/* HLT		0xf4		1					*/
+{ "hlt",	0xf4,		OP1F, AO_0()				},
+/* IDIV									*/
+/* FIXME implement */
+/* IMUL									*/
+/* FIXME implement */
+/* IN		0xe4		1     al          imm8			*/
+{ "in",		0xe4,		OP1F, AO_2(OP_al, OP_S8)		},
+/* IN		0xe5		1     AX          imm8			*/
+{ "in",		0xe5,		OP1F, AO_2(OP_AX, OP_S8)		},
+/* IN		0xec		1     al          dx			*/
+{ "in",		0xec,		OP1F, AO_2(OP_al, OP_dx)		},
+/* IN		0xed		1     AX          dx			*/
+{ "in",		0xed,		OP1F, AO_2(OP_AX, OP_dx)		},
+/* INC		0x40 +rd	1					*/
+{ "inc",	0x40,		OP1F, AO_1(OP_AX)			},
+{ "inc",	0x41,		OP1F, AO_1(OP_CX)			},
+{ "inc",	0x42,		OP1F, AO_1(OP_DX)			},
+{ "inc",	0x43,		OP1F, AO_1(OP_BX)			},
+{ "inc",	0x44,		OP1F, AO_1(OP_SP)			},
+{ "inc",	0x45,		OP1F, AO_1(OP_BP)			},
+{ "inc",	0x46,		OP1F, AO_1(OP_SI)			},
+{ "inc",	0x47,		OP1F, AO_1(OP_DI)			},
+/* INC		0xfe /0		1     r/m8				*/
+{ "incb",	0xfe,		OP1F, AO_1(OP_RM8_D0+0)			},
+{ "incb",	0xfe,		OP1F, AO_1(OP_RM8_D8+0)			},
+{ "incb",	0xfe,		OP1F, AO_1(OP_RM8_DW+0)			},
+{ "inc",	0xfe,		OP1F, AO_1(OP_RM8_R8+0)			},
+/* INC		0xff /0		1     r/mW				*/
+{ "inc",	0xff,		OP1F, AO_1(OP_RMW_D0+0)			},
+{ "inc",	0xff,		OP1F, AO_1(OP_RMW_D8+0)			},
+{ "inc",	0xff,		OP1F, AO_1(OP_RMW_DW+0)			},
+{ "inc",	0xff,		OP1F, AO_1(OP_RMW_RW+0)			},
+/* INSB		0x6c		1					*/
+{ "insb",	0x6c,		OP1F, AO_0()				},
+#ifdef ARCH_i386_real
+/* INSW		0x6d		1					*/
+{ "insw",	0x6d,		OP1F, AO_0()				},
+#else
+/* INSD		0x6d		1					*/
+{ "insd",	0x6d,		OP1F, AO_0()				},
+#endif
+/* INT		0xcd		1     imm8				*/
+{ "int",	0xcd,		OP1F, AO_1(OP_U8)			},
+/* INT		0xcc		1     3					*/
+{ "int",	0xcc,		OP1F, AO_1(OP_C3)			},
+/* INT3		0xcc		1					*/
+{ "int3",	0xcc,		OP1F, AO_0()				},
+/* INTO		0xce		1					*/
+{ "into",	0xce,		OP1F, AO_0()				},
+/* INVD		0x0f08		2					*/
+{ "invd",	0x0f08,		OP2F, AO_0()				},
+/* IRET		0xcf		1					*/
+{ "iret",	0xcf,		OP1F, AO_0()				},
+/* IRETD	0xcf		1					*/
+{ "iretd",	0xcf,		OP1F, AO_0()				},
+/* JA		0x77		1     rel8				*/
+{ "ja",		0x77,		OP1F, AO_1(OP_S8)			},
+/* JA		0x0f87		2     relW				*/
+{ "ja",		0x0f87,		OP2F, AO_1(OP_SW)			},
+/* JAE		0x73		1     rel8				*/
+{ "jae",	0x73,		OP1F, AO_1(OP_S8)			},
+/* JAE		0x0f83		2     relW				*/
+{ "jae",	0x0f83,		OP2F, AO_1(OP_SW)			},
+/* JB		0x72		1     rel8				*/
+{ "jb",		0x72,		OP1F, AO_1(OP_S8)			},
+/* JB		0x0f82		2     relW				*/
+{ "jb",		0x0f82,		OP2F, AO_1(OP_SW)			},
+/* JBE		0x76		1     rel8				*/
+{ "jbe",	0x76,		OP1F, AO_1(OP_S8)			},
+/* JBE		0x0f86		2     relW				*/
+{ "jbe",	0x0f86,		OP2F, AO_1(OP_SW)			},
+/* JC		0x72		1     rel8				*/
+{ "jc",		0x72,		OP1F, AO_1(OP_S8)			},
+/* JC		0x0f82		2     relW				*/
+{ "jc",		0x0f82,		OP2F, AO_1(OP_SW)			},
+/* JE		0x74		1     rel8				*/
+{ "je",		0x74,		OP1F, AO_1(OP_S8)			},
+/* JE		0x0f84		2     relW				*/
+{ "je",		0x0f84,		OP2F, AO_1(OP_SW)			},
+/* JG		0x7f		1     rel8				*/
+{ "jg",		0x7f,		OP1F, AO_1(OP_S8)			},
+/* JG		0x0f8f		2     relW				*/
+{ "jg",		0x0f8f,		OP2F, AO_1(OP_SW)			},
+/* JGE		0x7d		1     rel8				*/
+{ "jge",	0x7d,		OP1F, AO_1(OP_S8)			},
+/* JGE		0x0f8d		2     relW				*/
+{ "jge",	0x0f8d,		OP2F, AO_1(OP_SW)			},
+/* JL		0x7c		1     rel8				*/
+{ "jl",		0x7c,		OP1F, AO_1(OP_S8)			},
+/* JL		0x0f8c		2     relW				*/
+{ "jl",		0x0f8c,		OP2F, AO_1(OP_SW)			},
+/* JLE		0x7e		1     rel8				*/
+{ "jle",	0x7e,		OP1F, AO_1(OP_S8)			},
+/* JLE		0x0f8e		2     relW				*/
+{ "jle",	0x0f8e,		OP2F, AO_1(OP_SW)			},
+/* JMP		0xeb		1     imm8				*/
+{ "jmp",	0xeb,		OP1F, AO_1(OP_S8)			},
+/* JMP		0xe9		1     immW				*/
+{ "jmp",	0xe9,		OP1F, AO_1(OP_SW)			},
+/* JMP		0xff /4		1     r/mW				*/
+{ "jmp",	0xff,		OP1F, AO_1(OP_RMW_D0+4)			},
+{ "jmp",	0xff,		OP1F, AO_1(OP_RMW_D8+4)			},
+{ "jmp",	0xff,		OP1F, AO_1(OP_RMW_DW+4)			},
+{ "jmp",	0xff,		OP1F, AO_1(OP_RMW_RW+4)			},
+/* JMP		0xff /5		1     m16int				*/
+{ "jmp",	0xff,		OP1F, AO_1(OP_RMW_D0+5)			},
+{ "jmp",	0xff,		OP1F, AO_1(OP_RMW_D8+5)			},
+{ "jmp",	0xff,		OP1F, AO_1(OP_RMW_DW+5)			},
+{ "jmp",	0xff,		OP1F, AO_1(OP_RMW_RW+5)			},
+/* JNA		0x76		1     rel8				*/
+{ "jna",	0x76,		OP1F, AO_1(OP_S8)			},
+/* JNA		0x0f86		2     relW				*/
+{ "jna",	0x0f86,		OP2F, AO_1(OP_SW)			},
+/* JNAE		0x72		1     rel8				*/
+{ "jnae",	0x72,		OP1F, AO_1(OP_S8)			},
+/* JNAE		0x0f82		2     relW				*/
+{ "jnae",	0x0f82,		OP2F, AO_1(OP_SW)			},
+/* JNB		0x73		1     rel8				*/
+{ "jnb",	0x73,		OP1F, AO_1(OP_S8)			},
+/* JNB		0x0f83		2     relW				*/
+{ "jnb",	0x0f83,		OP2F, AO_1(OP_SW)			},
+/* JNBE		0x77		1     rel8				*/
+{ "jnbe",	0x77,		OP1F, AO_1(OP_S8)			},
+/* JNBE		0x0f87		2     relW				*/
+{ "jnbe",	0x0f87,		OP2F, AO_1(OP_SW)			},
+/* JNC		0x73		1     rel8				*/
+{ "jnc",	0x73,		OP1F, AO_1(OP_S8)			},
+/* JNC		0x0f83		2     relW				*/
+{ "jnc",	0x0f83,		OP2F, AO_1(OP_SW)			},
+/* JNE		0x75		1     rel8				*/
+{ "jne",	0x75,		OP1F, AO_1(OP_S8)			},
+/* JNE		0x0f85		2     relW				*/
+{ "jne",	0x0f85,		OP2F, AO_1(OP_SW)			},
+/* JNG		0x7e		1     rel8				*/
+{ "jng",	0x7e,		OP1F, AO_1(OP_S8)			},
+/* JNG		0x0f8e		2     relW				*/
+{ "jng",	0x0f8e,		OP2F, AO_1(OP_SW)			},
+/* JNGE		0x7c		1     rel8				*/
+{ "jnge",	0x7c,		OP1F, AO_1(OP_S8)			},
+/* JNGE		0x0f8c		2     relW				*/
+{ "jnge",	0x0f8c,		OP2F, AO_1(OP_SW)			},
+/* JNL		0x7d		1     rel8				*/
+{ "jnl",	0x7d,		OP1F, AO_1(OP_S8)			},
+/* JNL		0x0f8d		2     relW				*/
+{ "jnl",	0x0f8d,		OP2F, AO_1(OP_SW)			},
+/* JNLE		0x7f		1     rel8				*/
+{ "jnle",	0x7f,		OP1F, AO_1(OP_S8)			},
+/* JNLE		0x0f8f		2     relW				*/
+{ "jnle",	0x0f8f,		OP2F, AO_1(OP_SW)			},
+/* JNO		0x71		1     rel8				*/
+{ "jno",	0x71,		OP1F, AO_1(OP_S8)			},
+/* JNO		0x0f81		2     relW				*/
+{ "jno",	0x0f81,		OP2F, AO_1(OP_SW)			},
+/* JNP		0x7b		1     rel8				*/
+{ "jnp",	0x7b,		OP1F, AO_1(OP_S8)			},
+/* JNP		0x0f8b		2     relW				*/
+{ "jnp",	0x0f8b,		OP2F, AO_1(OP_SW)			},
+/* JNS		0x79		1     rel8				*/
+{ "jns",	0x79,		OP1F, AO_1(OP_S8)			},
+/* JNS		0x0f89		2     relW				*/
+{ "jns",	0x0f89,		OP2F, AO_1(OP_SW)			},
+/* JO		0x70		1     rel8				*/
+{ "jo",		0x70,		OP1F, AO_1(OP_S8)			},
+/* JO		0x0f80		2     relW				*/
+{ "jo",		0x0f80,		OP2F, AO_1(OP_SW)			},
+/* JP		0x7a		1     rel8				*/
+{ "jp",		0x7a,		OP1F, AO_1(OP_S8)			},
+/* JP		0x0f8a		2     relW				*/
+{ "jp",		0x0f8a,		OP2F, AO_1(OP_SW)			},
+/* JPE		0x7a		1     rel8				*/
+{ "jpe",	0x7a,		OP1F, AO_1(OP_S8)			},
+/* JPE		0x0f8a		2     relW				*/
+{ "jpe",	0x0f8a,		OP2F, AO_1(OP_SW)			},
+/* JPO		0x7b		1     rel8				*/
+{ "jpo",	0x7b,		OP1F, AO_1(OP_S8)			},
+/* JPO		0x0f8b		2     relW				*/
+{ "jpo",	0x0f8b,		OP2F, AO_1(OP_SW)			},
+/* JS		0x78		1     rel8				*/
+{ "js",		0x78,		OP1F, AO_1(OP_S8)			},
+/* JS		0x0f88		2     relW				*/
+{ "js",		0x0f88,		OP2F, AO_1(OP_SW)			},
+/* JZ		0x74		1     rel8				*/
+{ "jz",		0x74,		OP1F, AO_1(OP_S8)			},
+/* JZ		0x0f84		2     relW				*/
+{ "jz",		0x0f84,		OP2F, AO_1(OP_SW)			},
+/* LAHF		0x9f		1					*/
+{ "lahf",	0x9f,		OP1F, AO_0()				},
+#if 1 /* FIXME probably doesn't work at the moment */
+/* LEA		0x8d		1     rW          m			*/
+{ "lea",	0x8d,		OP1F, AO_2(OP_RW_R, OP_RMW_D0)		},
+{ "lea",	0x8d,		OP1F, AO_2(OP_RW_R, OP_RMW_D8)		},
+{ "lea",	0x8d,		OP1F, AO_2(OP_RW_R, OP_RMW_DW)		},
+{ "lea",	0x8d,		OP1F, AO_2(OP_RW_R, OP_RMW_RW)		},
+#endif
+/* LEAVE	0xc9		1					*/
+{ "leave",	0xc9,		OP1F, AO_0()				},
+/* LOCK		0xf0		1					*/
+{ "lock",	0xf0,		OP1F, AO_0()				},
+/* LODSB	0xac		1					*/
+{ "lodsb",	0xac,		OP1F, AO_0()				},
+#ifdef ARCH_i386_real
+/* LODSW	0xad		1					*/
+{ "lodsw",	0xad,		OP1F, AO_0()				},
+#else
+/* LODSD	0xad		1					*/
+{ "lodsd",	0xad,		OP1F, AO_0()				},
+#endif
+/* LOOP		0xe2		1     rel8				*/
+{ "loop",	0xe2,		OP1F, AO_1(OP_S8)			},
+/* LOOPE	0xe1		1     rel8				*/
+{ "loope",	0xe1,		OP1F, AO_1(OP_S8)			},
+/* LOOPNE	0xe0		1     rel8				*/
+{ "loopne",	0xe0,		OP1F, AO_1(OP_S8)			},
+/* LOOPNZ	0xe0		1     rel8				*/
+{ "loopnz",	0xe0,		OP1F, AO_1(OP_S8)			},
+/* LOOPZ	0xe1		1     rel8				*/
+{ "loopz",	0xe1,		OP1F, AO_1(OP_S8)			},
+/* MOV		0x88 /r		1     r/m8        r8			*/
+{ "mov",	0x88,		OP1F, AO_2(OP_RM8_D0, OP_R8_R)		},
+{ "mov",	0x88,		OP1F, AO_2(OP_RM8_D8, OP_R8_R)		},
+{ "mov",	0x88,		OP1F, AO_2(OP_RM8_DW, OP_R8_R)		},
+{ "mov",	0x88,		OP1F, AO_2(OP_RM8_R8, OP_R8_R)		},
+/* MOV		0x89 /r		1     r/mW        rW			*/
+{ "mov",	0x89,		OP1F, AO_2(OP_RMW_D0, OP_RW_R)		},
+{ "mov",	0x89,		OP1F, AO_2(OP_RMW_D8, OP_RW_R)		},
+{ "mov",	0x89,		OP1F, AO_2(OP_RMW_DW, OP_RW_R)		},
+{ "mov",	0x89,		OP1F, AO_2(OP_RMW_RW, OP_RW_R)		},
+/* MOV		0x8a /r		1     r8          r/m8			*/
+{ "mov",	0x8a,		OP1F, AO_2(OP_R8_R, OP_RM8_D0)		},
+{ "mov",	0x8a,		OP1F, AO_2(OP_R8_R, OP_RM8_D8)		},
+{ "mov",	0x8a,		OP1F, AO_2(OP_R8_R, OP_RM8_DW)		},
+{ "mov",	0x8a,		OP1F, AO_2(OP_R8_R, OP_RM8_R8)		},
+/* MOV		0x8b /r		1     rW          r/mW			*/
+{ "mov",	0x8b,		OP1F, AO_2(OP_RW_R, OP_RMW_D0)		},
+{ "mov",	0x8b,		OP1F, AO_2(OP_RW_R, OP_RMW_D8)		},
+{ "mov",	0x8b,		OP1F, AO_2(OP_RW_R, OP_RMW_DW)		},
+{ "mov",	0x8b,		OP1F, AO_2(OP_RW_R, OP_RMW_RW)		},
+#if 1 /* FIXME doesn't work properly */
+/* MOV		0x8e /r		1     Sreg        r/m16			*/
+#endif
+{ "mov",	0x8e,		OP1F, AO_2(OP_R16_R, OP_R16_R)		},
+/* MOV		0xa0		1     al          moffs8		*/
+{ "mov",	0xa0,		OP1F, AO_2(OP_al, OP_SW)		},
+/* MOV		0xa1		1     AX          moffs16		*/
+{ "mov",	0xa1,		OP1F, AO_2(OP_AX, OP_SW)		},
+/* MOV		0xa2		1     moffs8      al			*/
+{ "mov",	0xa2,		OP1F, AO_2(OP_SW, OP_al)		},
+/* MOV		0xa3		1     moffsW      AX			*/
+{ "mov",	0xa3,		OP1F, AO_2(OP_SW, OP_AX)		},
+/* MOV		0xb0 +rb	1     r8          imm8			*/
+{ "mov",	0xb0,		OP1F, AO_2(OP_al, OP_S8)		},
+{ "mov",	0xb1,		OP1F, AO_2(OP_cl, OP_S8)		},
+{ "mov",	0xb2,		OP1F, AO_2(OP_dl, OP_S8)		},
+{ "mov",	0xb3,		OP1F, AO_2(OP_bl, OP_S8)		},
+{ "mov",	0xb4,		OP1F, AO_2(OP_ah, OP_S8)		},
+{ "mov",	0xb5,		OP1F, AO_2(OP_ch, OP_S8)		},
+{ "mov",	0xb6,		OP1F, AO_2(OP_dh, OP_S8)		},
+{ "mov",	0xb7,		OP1F, AO_2(OP_bh, OP_S8)		},
+/* MOV		0xb8 +rw	1     rW          immW			*/
+{ "mov",	0xb8,		OP1F, AO_2(OP_AX, OP_SW)		},
+{ "mov",	0xb9,		OP1F, AO_2(OP_CX, OP_SW)		},
+{ "mov",	0xba,		OP1F, AO_2(OP_DX, OP_SW)		},
+{ "mov",	0xbb,		OP1F, AO_2(OP_BX, OP_SW)		},
+{ "mov",	0xbc,		OP1F, AO_2(OP_SP, OP_SW)		},
+{ "mov",	0xbd,		OP1F, AO_2(OP_BP, OP_SW)		},
+{ "mov",	0xbe,		OP1F, AO_2(OP_SI, OP_SW)		},
+{ "mov",	0xbf,		OP1F, AO_2(OP_DI, OP_SW)		},
+/* MOV		0xc6 /0		1     r/m8        imm8			*/
+{ "mov",	0xc6,		OP1F, AO_2(OP_RM8_D0+0, OP_S8)		},
+{ "mov",	0xc6,		OP1F, AO_2(OP_RM8_D8+0, OP_S8)		},
+{ "mov",	0xc6,		OP1F, AO_2(OP_RM8_DW+0, OP_S8)		},
+{ "mov",	0xc6,		OP1F, AO_2(OP_RM8_R8+0, OP_S8)		},
+/* MOV		0xc7 /0		1     r/mW        immW			*/
+{ "mov",	0xc7,		OP1F, AO_2(OP_RMW_D0+0, OP_SW)		},
+{ "mov",	0xc7,		OP1F, AO_2(OP_RMW_D8+0, OP_SW)		},
+{ "mov",	0xc7,		OP1F, AO_2(OP_RMW_DW+0, OP_SW)		},
+{ "mov",	0xc7,		OP1F, AO_2(OP_RMW_RW+0, OP_SW)		},
+#if 1 /* FIXME doesn't work properly */
+/* MOV		0x0f20 /r	2     r32         cr0-cr4		*/
+{ "mov",	0x0f20,		OP2F, AO_2(OP_RW_R, OP_cr0)		},
+{ "mov",	0x0f20,		OP2F, AO_2(OP_RW_R, OP_cr2)		},
+{ "mov",	0x0f20,		OP2F, AO_2(OP_RW_R, OP_cr3)		},
+{ "mov",	0x0f20,		OP2F, AO_2(OP_RW_R, OP_cr4)		},
+#endif
+#if 1 /* FIXME doesn't work properly */
+/* MOV		0x0f22 /r	2     cr0-cr4     r32			*/
+{ "mov",	0x0f22,		OP2F, AO_2(OP_cr0, OP_RW_R)		},
+{ "mov",	0x0f22,		OP2F, AO_2(OP_cr2, OP_RW_R)		},
+{ "mov",	0x0f22,		OP2F, AO_2(OP_cr3, OP_RW_R)		},
+{ "mov",	0x0f22,		OP2F, AO_2(OP_cr4, OP_RW_R)		},
+#endif
+/* FIXME implement */
+/* MOV		0x0f21 /r	2     r32         dr0-dr7		*/
+/* FIXME implement */
+/* MOV		0x0f23 /r	2     dr0-dr7     r32			*/
+/* FIXME implement */
+/* MOVSB	0xa4		1					*/
+{ "movsb",	0xa4,		OP1F, AO_0()				},
+#ifdef ARCH_i386_real
+/* MOVSW	0xa5		1					*/
+{ "movsw",	0xa5,		OP1F, AO_0()				},
+#else
+/* MOVSD	0xa5		1					*/
+{ "movsd",	0xa5,		OP1F, AO_0()				},
+#endif
+/* MOVSX	0x0fbe /r	2     rW          r/m8			*/
+/* FIXME implement */
+/* MOVSX	0x0fbf /r	2     r32         r/m16			*/
+/* FIXME implement */
+/* MOVZX	0x0fb6 /r	2     rW          r/m8			*/
+/* FIXME implement */
+/* MOVZX	0x0fb7 /r	2     r32         r/m16			*/
+/* FIXME implement */
+/* MUL		0xf6 /4		1     r/m8				*/
+{ "mulb",	0xf6,		OP1F, AO_1(OP_RM8_D0+4)			},
+{ "mulb",	0xf6,		OP1F, AO_1(OP_RM8_D8+4)			},
+{ "mulb",	0xf6,		OP1F, AO_1(OP_RM8_DW+4)			},
+{ "mul",	0xf6,		OP1F, AO_1(OP_RM8_R8+4)			},
+/* MUL		0xf7 /4		1     r/mW				*/
+{ "mul",	0xf7,		OP1F, AO_1(OP_RMW_D0+4)			},
+{ "mul",	0xf7,		OP1F, AO_1(OP_RMW_D8+4)			},
+{ "mul",	0xf7,		OP1F, AO_1(OP_RMW_DW+4)			},
+{ "mul",	0xf7,		OP1F, AO_1(OP_RMW_RW+4)			},
+/* NEG		0xf6 /3		1     r/m8				*/
+{ "negb",	0xf6,		OP1F, AO_1(OP_RM8_D0+3)			},
+{ "negb",	0xf6,		OP1F, AO_1(OP_RM8_D8+3)			},
+{ "negb",	0xf6,		OP1F, AO_1(OP_RM8_DW+3)			},
+{ "neg",	0xf6,		OP1F, AO_1(OP_RM8_R8+3)			},
+/* NEG		0xf7 /3		1     r/mW				*/
+{ "neg",	0xf7,		OP1F, AO_1(OP_RMW_D0+3)			},
+{ "neg",	0xf7,		OP1F, AO_1(OP_RMW_D8+3)			},
+{ "neg",	0xf7,		OP1F, AO_1(OP_RMW_DW+3)			},
+{ "neg",	0xf7,		OP1F, AO_1(OP_RMW_RW+3)			},
+/* NOP		0x90		1					*/
+{ "nop",	0x90,		OP1F, AO_0()				},
+/* NOT		0xf6 /2		1     r/m8				*/
+{ "notb",	0xf6,		OP1F, AO_1(OP_RM8_D0+2)			},
+{ "notb",	0xf6,		OP1F, AO_1(OP_RM8_D8+2)			},
+{ "notb",	0xf6,		OP1F, AO_1(OP_RM8_DW+2)			},
+{ "not",	0xf6,		OP1F, AO_1(OP_RM8_R8+2)			},
+/* NOT		0xf7 /2		1     r/mW				*/
+{ "not",	0xf7,		OP1F, AO_1(OP_RMW_D0+2)			},
+{ "not",	0xf7,		OP1F, AO_1(OP_RMW_D8+2)			},
+{ "not",	0xf7,		OP1F, AO_1(OP_RMW_DW+2)			},
+{ "not",	0xf7,		OP1F, AO_1(OP_RMW_RW+2)			},
+/* OPSIZE	0x66		1					*/
+{ "opsize",	0x66,		OP1F, AO_0()				},
+/* OR		0x0c ib		1     al          imm8			*/
+{ "or",		0x0c,		OP1F, AO_2(OP_al, OP_S8)		},
+/* OR		0x0d iW		1     AX          immW			*/
+{ "or",		0x0d,		OP1F, AO_2(OP_AX, OP_SW)		},
+/* OR		0x80 /r		1     r/m8        r8			*/
+{ "or",		0x08,		OP1F, AO_2(OP_RM8_D0, OP_R8_R)		},
+{ "or",		0x08,		OP1F, AO_2(OP_RM8_D8, OP_R8_R)		},
+{ "or",		0x08,		OP1F, AO_2(OP_RM8_DW, OP_R8_R)		},
+{ "or",		0x08,		OP1F, AO_2(OP_RM8_R8, OP_R8_R)		},
+/* OR		0x09 /r		1     r/mW        rW			*/
+{ "or",		0x09,		OP1F, AO_2(OP_RMW_D0, OP_RW_R)		},
+{ "or",		0x09,		OP1F, AO_2(OP_RMW_D8, OP_RW_R)		},
+{ "or",		0x09,		OP1F, AO_2(OP_RMW_DW, OP_RW_R)		},
+{ "or",		0x09,		OP1F, AO_2(OP_RMW_RW, OP_RW_R)		},
+/* OR		0x32 /r		1     r8          r/m8			*/
+#if 1 /* FIXME doesn't work at the moment */
+{ "or",		0x0a,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_D0_R)	},
+{ "or",		0x0a,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_D8_R)	},
+{ "or",		0x0a,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_DW_R)	},
+{ "or",		0x0a,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_R8_R)	},
+#endif
+/* OR		0x0b /r		1     rW          r/mW			*/
+#if 1 /* FIXME doesn't work at the moment */
+{ "or",		0x0b,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_D0_R)	},
+{ "or",		0x0b,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_D8_R)	},
+{ "or",		0x0b,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_DW_R)	},
+{ "or",		0x0b,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_RW_R)	},
+#endif
+/* OR		0x80 /1 ib	1     r/m8        imm8			*/
+{ "orb",	0x80,		OP1F, AO_2(OP_RM8_D0+1, OP_S8)		},
+{ "orb",	0x80,		OP1F, AO_2(OP_RM8_D8+1, OP_S8)		},
+{ "orb",	0x80,		OP1F, AO_2(OP_RM8_DW+1, OP_S8)		},
+{ "or",		0x80,		OP1F, AO_2(OP_RM8_R8+1, OP_S8)		},
+/* OR		0x81 /1 iW	1     r/mW        immW			*/
+{ "or",		0x81,		OP1F, AO_2(OP_RMW_D0+1, OP_SW)		},
+{ "or",		0x81,		OP1F, AO_2(OP_RMW_D8+1, OP_SW)		},
+{ "or",		0x81,		OP1F, AO_2(OP_RMW_DW+1, OP_SW)		},
+{ "or",		0x81,		OP1F, AO_2(OP_RMW_RW+1, OP_SW)		},
+/* OR		0x83 /1 ib	1     r/mW        imm8			*/
+{ "orb",	0x83,		OP1F, AO_2(OP_RMW_D0+1, OP_S8)		},
+{ "orb",	0x83,		OP1F, AO_2(OP_RMW_D8+1, OP_S8)		},
+{ "orb",	0x83,		OP1F, AO_2(OP_RMW_DW+1, OP_S8)		},
+{ "or",		0x83,		OP1F, AO_2(OP_RMW_RW+1, OP_S8)		},
+/* OUT		0xe6		1     imm8        al			*/
+{ "out",	0xe6,		OP1F, AO_2(OP_U8, OP_al)		},
+/* OUT		0xe7		1     imm8        AX			*/
+{ "out",	0xe7,		OP1F, AO_2(OP_U8, OP_AX)		},
+/* OUT		0xee		1     dx          al			*/
+{ "out",	0xee,		OP1F, AO_2(OP_dx, OP_al)		},
+/* OUT		0xef		1     dx          AX			*/
+{ "out",	0xef,		OP1F, AO_2(OP_dx, OP_AX)		},
+/* OUTSB	0x6e		1					*/
+{ "outsb",	0x6e,		OP1F, AO_0()				},
+#ifdef ARCH_i386_real
+/* OUTSW	0x6f		1					*/
+{ "outsw",	0x6f,		OP1F, AO_0()				},
+#else
+/* OUTSD	0x6f		1					*/
+{ "outsd",	0x6f,		OP1F, AO_0()				},
+#endif
+/* POP		0x07		1     es				*/
+{ "pop",	0x07,		OP1F, AO_1(OP_es)			},
+/* POP		0x17		1     ss				*/
+{ "pop",	0x17,		OP1F, AO_1(OP_ss)			},
+/* POP		0x1f		1     ds				*/
+{ "pop",	0x1f,		OP1F, AO_1(OP_ds)			},
+/* POP		0x0fa1		2     fs				*/
+{ "pop",	0x0fa1,		OP2F, AO_1(OP_fs)			},
+/* POP		0x0fa9		2     gs				*/
+{ "pop",	0x0fa9,		OP2F, AO_1(OP_gs)			},
+/* POP		0x58 +rW	1     					*/
+{ "pop",	0x58,		OP1F, AO_1(OP_AX)			},
+{ "pop",	0x59,		OP1F, AO_1(OP_CX)			},
+{ "pop",	0x5a,		OP1F, AO_1(OP_DX)			},
+{ "pop",	0x5b,		OP1F, AO_1(OP_BX)			},
+{ "pop",	0x5c,		OP1F, AO_1(OP_SP)			},
+{ "pop",	0x5d,		OP1F, AO_1(OP_BP)			},
+{ "pop",	0x5e,		OP1F, AO_1(OP_SI)			},
+{ "pop",	0x5f,		OP1F, AO_1(OP_DI)			},
+/* POP		0x8f /0		1     rmW				*/
+{ "pop",	0x8f,		OP1F, AO_1(OP_RMW_D0+0)			},
+{ "pop",	0x8f,		OP1F, AO_1(OP_RMW_D8+0)			},
+{ "pop",	0x8f,		OP1F, AO_1(OP_RMW_DW+0)			},
+{ "pop",	0x8f,		OP1F, AO_1(OP_RMW_RW+0)			},
+/* POPA		0x61		1					*/
+{ "popa",	0x61,		OP1F, AO_0()				},
+/* POPAD	0x61		1					*/
+{ "popad",	0x61,		OP1F, AO_0()				},
+/* POPF		0x9d		1					*/
+{ "popf",	0x9d,		OP1F, AO_0()				},
+/* POPFD	0x9d		1					*/
+{ "popfd",	0x9d,		OP1F, AO_0()				},
+/* PUSH		0x06		1     es				*/
+{ "push",	0x06,		OP1F, AO_1(OP_es)			},
+/* PUSH		0x0e		1     cs				*/
+{ "push",	0x0e,		OP1F, AO_1(OP_cs)			},
+/* PUSH		0x16		1     ss				*/
+{ "push",	0x16,		OP1F, AO_1(OP_ss)			},
+/* PUSH		0x1e		1     ds				*/
+{ "push",	0x1e,		OP1F, AO_1(OP_ds)			},
+/* PUSH		0x0fa0		2     fs				*/
+{ "push",	0x0fa0,		OP2F, AO_1(OP_fs)			},
+/* PUSH		0x0fa8		2     gs				*/
+{ "push",	0x0fa8,		OP2F, AO_1(OP_gs)			},
+/* PUSH		0x50 +rW	1     					*/
+{ "push",	0x50,		OP1F, AO_1(OP_AX)			},
+{ "push",	0x51,		OP1F, AO_1(OP_CX)			},
+{ "push",	0x52,		OP1F, AO_1(OP_DX)			},
+{ "push",	0x53,		OP1F, AO_1(OP_BX)			},
+{ "push",	0x54,		OP1F, AO_1(OP_SP)			},
+{ "push",	0x55,		OP1F, AO_1(OP_BP)			},
+{ "push",	0x56,		OP1F, AO_1(OP_SI)			},
+{ "push",	0x57,		OP1F, AO_1(OP_DI)			},
+/* PUSH		0x6a		1     imm8				*/
+{ "push",	0x6a,		OP1F, AO_1(OP_S8)			},
+/* PUSH		0x68		1     immW				*/
+{ "push",	0x68,		OP1F, AO_1(OP_SW)			},
+/* PUSH		0xff /6		1     rmW				*/
+{ "push",	0xff,		OP1F, AO_1(OP_RMW_D0+6)			},
+{ "push",	0xff,		OP1F, AO_1(OP_RMW_D8+6)			},
+{ "push",	0xff,		OP1F, AO_1(OP_RMW_DW+6)			},
+{ "push",	0xff,		OP1F, AO_1(OP_RMW_RW+6)			},
+/* PUSHA	0x60		1					*/
+{ "pusha",	0x60,		OP1F, AO_0()				},
+/* PUSHAD	0x60		1					*/
+{ "pushad",	0x60,		OP1F, AO_0()				},
+/* PUSHF	0x9c		1					*/
+{ "pushf",	0x9c,		OP1F, AO_0()				},
+/* PUSHFD	0x9c		1					*/
+{ "pushfd",	0x9c,		OP1F, AO_0()				},
+/* RCL									*/
+/* FIXME implement */
+/* RCR									*/
+/* FIXME implement */
+/* ROL									*/
+/* FIXME implement */
+/* ROR									*/
+/* FIXME implement */
+/* REP		0xf3a4		2     MOVS m8				*/
+{ "rep movs",	0xf3a4,		OP2F, AO_0()				},
+/* REP		0xf3ab		2     STOS mW				*/
+{ "rep stos",	0xf3ab,		OP2F, AO_0()				},
+/* FIXME implement the rest */
+/* RET		0xc2		1     imm16				*/
+{ "ret",	0xc2,		OP1F, AO_1(OP_U16)			},
+/* RET		0xca		1     imm16				*/
+{ "ret",	0xca,		OP1F, AO_1(OP_U16)			},
+/* RET		0xc3		1					*/
+{ "ret",	0xc3,		OP1F, AO_0()				},
+/* RET		0xcb		1					*/
+{ "ret",	0xcb,		OP1F, AO_0()				},
+/* RSM		0x0faa		2					*/
+{ "rsm",	0x0faa,		OP2F, AO_0()				},
+/* SAHF		0x9e		1					*/
+{ "sahf",	0x9e,		OP1F, AO_0()				},
+/* SAL		0xc0 /4		1     r/m8        imm8			*/
+{ "sal",	0xc0,		OP1F, AO_2(OP_RM8_D0+4, OP_U8)		},
+{ "sal",	0xc0,		OP1F, AO_2(OP_RM8_D8+4, OP_U8)		},
+{ "sal",	0xc0,		OP1F, AO_2(OP_RM8_DW+4, OP_U8)		},
+{ "sal",	0xc0,		OP1F, AO_2(OP_RM8_R8+4, OP_U8)		},
+/* SAL		0xc1 /4		1     r/mW        imm8			*/
+{ "sal",	0xc1,		OP1F, AO_2(OP_RMW_D0+4, OP_U8)		},
+{ "sal",	0xc1,		OP1F, AO_2(OP_RMW_D8+4, OP_U8)		},
+{ "sal",	0xc1,		OP1F, AO_2(OP_RMW_DW+4, OP_U8)		},
+{ "sal",	0xc1,		OP1F, AO_2(OP_RMW_RW+4, OP_U8)		},
+/* FIXME implement */
+/* SAR		0xc0 /7		1     r/m8        imm8			*/
+{ "sar",	0xc0,		OP1F, AO_2(OP_RM8_D0+7, OP_U8)		},
+{ "sar",	0xc0,		OP1F, AO_2(OP_RM8_D8+7, OP_U8)		},
+{ "sar",	0xc0,		OP1F, AO_2(OP_RM8_DW+7, OP_U8)		},
+{ "sar",	0xc0,		OP1F, AO_2(OP_RM8_R8+7, OP_U8)		},
+/* SAR		0xc1 /7		1     r/mW        imm8			*/
+{ "sar",	0xc1,		OP1F, AO_2(OP_RMW_D0+7, OP_U8)		},
+{ "sar",	0xc1,		OP1F, AO_2(OP_RMW_D8+7, OP_U8)		},
+{ "sar",	0xc1,		OP1F, AO_2(OP_RMW_DW+7, OP_U8)		},
+{ "sar",	0xc1,		OP1F, AO_2(OP_RMW_RW+7, OP_U8)		},
+/* FIXME implement */
+/* SHL		0xc1 /4		1     r/mW        imm8			*/
+{ "shl",	0xc1,		OP1F, AO_2(OP_RMW_D0+4, OP_U8)		},
+{ "shl",	0xc1,		OP1F, AO_2(OP_RMW_D8+4, OP_U8)		},
+{ "shl",	0xc1,		OP1F, AO_2(OP_RMW_DW+4, OP_U8)		},
+{ "shl",	0xc1,		OP1F, AO_2(OP_RMW_RW+4, OP_U8)		},
+/* FIXME implement */
+/* SHR		0xc1 /5		1     r/mW        imm8			*/
+{ "shr",	0xc1,		OP1F, AO_2(OP_RMW_D0+5, OP_U8)		},
+{ "shr",	0xc1,		OP1F, AO_2(OP_RMW_D8+5, OP_U8)		},
+{ "shr",	0xc1,		OP1F, AO_2(OP_RMW_DW+5, OP_U8)		},
+{ "shr",	0xc1,		OP1F, AO_2(OP_RMW_RW+5, OP_U8)		},
+/* FIXME implement */
+/* SBB		0x1c ib		1     al          imm8			*/
+{ "sbb",	0x1c,		OP1F, AO_2(OP_al, OP_S8)		},
+/* SBB		0x1d iW		1     AX          immW			*/
+{ "sbb",	0x1d,		OP1F, AO_2(OP_AX, OP_SW)		},
+/* SBB		0x18 /r		1     r/m8        r8			*/
+{ "sbb",	0x18,		OP1F, AO_2(OP_RM8_D0, OP_R8_R)		},
+{ "sbb",	0x18,		OP1F, AO_2(OP_RM8_D8, OP_R8_R)		},
+{ "sbb",	0x18,		OP1F, AO_2(OP_RM8_DW, OP_R8_R)		},
+{ "sbb",	0x18,		OP1F, AO_2(OP_RM8_R8, OP_R8_R)		},
+/* SBB		0x19 /r		1     r/mW        rW			*/
+{ "sbb",	0x19,		OP1F, AO_2(OP_RMW_D0, OP_RW_R)		},
+{ "sbb",	0x19,		OP1F, AO_2(OP_RMW_D8, OP_RW_R)		},
+{ "sbb",	0x19,		OP1F, AO_2(OP_RMW_DW, OP_RW_R)		},
+{ "sbb",	0x19,		OP1F, AO_2(OP_RMW_RW, OP_RW_R)		},
+/* SBB		0x1a /r		1     r8          r/m8			*/
+#if 1 /* FIXME probably doesn't work at the moment */
+{ "sbb",	0x1a,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_D0_R)	},
+{ "sbb",	0x1a,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_D8_R)	},
+{ "sbb",	0x1a,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_DW_R)	},
+{ "sbb",	0x1a,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_R8_R)	},
+#endif
+/* SBB		0x1b /r		1     rW          r/mW			*/
+#if 1 /* FIXME probably doesn't work at the moment */
+{ "sbb",	0x1b,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_D0_R)	},
+{ "sbb",	0x1b,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_D8_R)	},
+{ "sbb",	0x1b,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_DW_R)	},
+{ "sbb",	0x1b,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_RW_R)	},
+#endif
+/* SBB		0x80 /3 ib	1     r/m8        imm8			*/
+{ "sbbb",	0x80,		OP1F, AO_2(OP_RM8_D0+3, OP_S8)		},
+{ "sbbb",	0x80,		OP1F, AO_2(OP_RM8_D8+3, OP_S8)		},
+{ "sbbb",	0x80,		OP1F, AO_2(OP_RM8_DW+3, OP_S8)		},
+{ "sbb",	0x80,		OP1F, AO_2(OP_RM8_R8+3, OP_S8)		},
+/* SBB		0x81 /3 iW	1     r/mW        immW			*/
+{ "sbb",	0x81,		OP1F, AO_2(OP_RMW_D0+3, OP_SW)		},
+{ "sbb",	0x81,		OP1F, AO_2(OP_RMW_D8+3, OP_SW)		},
+{ "sbb",	0x81,		OP1F, AO_2(OP_RMW_DW+3, OP_SW)		},
+{ "sbb",	0x81,		OP1F, AO_2(OP_RMW_RW+3, OP_SW)		},
+/* SBB		0x83 /3 ib	1     r/mW        imm8			*/
+{ "sbbb",	0x83,		OP1F, AO_2(OP_RMW_D0+3, OP_S8)		},
+{ "sbbb",	0x83,		OP1F, AO_2(OP_RMW_D8+3, OP_S8)		},
+{ "sbbb",	0x83,		OP1F, AO_2(OP_RMW_DW+3, OP_S8)		},
+{ "sbb",	0x83,		OP1F, AO_2(OP_RMW_RW+3, OP_S8)		},
+/* SCASB	0xae		1					*/
+{ "scasb",	0xae,		OP1F, AO_0()				},
+#ifdef ARCH_i386_real
+/* SCASW	0xaf		1					*/
+{ "scasw",	0xaf,		OP1F, AO_0()				},
+#else
+/* SCASD	0xaf		1					*/
+{ "scasd",	0xaf,		OP1F, AO_0()				},
+#endif
+/* SETcc								*/
+/* FIXME implement */
+/* SGDT		0x0f01 /0	2     m					*/
+{ "sgdt",	0x0f01,		OP2F, AO_1(OP_RMW_D0+0)			},
+{ "sgdt",	0x0f01,		OP2F, AO_1(OP_RMW_D8+0)			},
+{ "sgdt",	0x0f01,		OP2F, AO_1(OP_RMW_DW+0)			},
+/* SIDT		0x0f01 /1	2     m					*/
+{ "sidt",	0x0f01,		OP2F, AO_1(OP_RMW_D0+1)			},
+{ "sidt",	0x0f01,		OP2F, AO_1(OP_RMW_D8+1)			},
+{ "sidt",	0x0f01,		OP2F, AO_1(OP_RMW_DW+1)			},
+/* SHLD		0x0fa4		2     r/mW        rW         imm8	*/
+{ "shld",	0x0fa4,		OP2F, AO_3(OP_RMW_D0, OP_RW_R, OP_U8)	},
+{ "shld",	0x0fa4,		OP2F, AO_3(OP_RMW_D8, OP_RW_R, OP_U8)	},
+{ "shld",	0x0fa4,		OP2F, AO_3(OP_RMW_DW, OP_RW_R, OP_U8)	},
+{ "shld",	0x0fa4,		OP2F, AO_3(OP_RMW_RW, OP_RW_R, OP_U8)	},
+/* SHLD		0x0fa5		2     r/mW        rW         cl		*/
+{ "shld",	0x0fa5,		OP2F, AO_3(OP_RMW_D0, OP_RW_R, OP_cl)	},
+{ "shld",	0x0fa5,		OP2F, AO_3(OP_RMW_D8, OP_RW_R, OP_cl)	},
+{ "shld",	0x0fa5,		OP2F, AO_3(OP_RMW_DW, OP_RW_R, OP_cl)	},
+{ "shld",	0x0fa5,		OP2F, AO_3(OP_RMW_RW, OP_RW_R, OP_cl)	},
+/* SHR		0xd0 /5		1     r/m8        1			*/
+{ "shr",	0xd0,		OP1F, AO_2(OP_RM8_D0, OP_C1)		},
+{ "shr",	0xd0,		OP1F, AO_2(OP_RM8_D8, OP_C1)		},
+{ "shr",	0xd0,		OP1F, AO_2(OP_RM8_DW, OP_C1)		},
+{ "shr",	0xd0,		OP1F, AO_2(OP_RM8_R8, OP_C1)		},
+/* SHRD		0x0fac		2     r/mW        rW         imm8	*/
+{ "shrd",	0x0fac,		OP2F, AO_3(OP_RMW_D0, OP_RW_R, OP_U8)	},
+{ "shrd",	0x0fac,		OP2F, AO_3(OP_RMW_D8, OP_RW_R, OP_U8)	},
+{ "shrd",	0x0fac,		OP2F, AO_3(OP_RMW_DW, OP_RW_R, OP_U8)	},
+{ "shrd",	0x0fac,		OP2F, AO_3(OP_RMW_RW, OP_RW_R, OP_U8)	},
+/* SHRD		0x0fad		2     r/mW        rW         cl		*/
+{ "shrd",	0x0fad,		OP2F, AO_3(OP_RMW_D0, OP_RW_R, OP_cl)	},
+{ "shrd",	0x0fad,		OP2F, AO_3(OP_RMW_D8, OP_RW_R, OP_cl)	},
+{ "shrd",	0x0fad,		OP2F, AO_3(OP_RMW_DW, OP_RW_R, OP_cl)	},
+{ "shrd",	0x0fad,		OP2F, AO_3(OP_RMW_RW, OP_RW_R, OP_cl)	},
+/* SLDT		0x0f00 /0	2     r/mW				*/
+/* FIXME implement */
+/* SMSW		0x0f01 /4	2     r/mW				*/
+/* FIXME implement */
+/* SS		0x36		1					*/
+{ "ss",		0x36,		OP1F, AO_0()				},
+/* STC		0xf9							*/
+{ "stc",	0xf9,		OP1F, AO_0()				},
+/* STD		0xfd							*/
+{ "std",	0xfd,		OP1F, AO_0()				},
+/* STI		0xfb							*/
+{ "sti",	0xfb,		OP1F, AO_0()				},
+/* STOSB	0xaa		1					*/
+{ "stosb",	0xaa,		OP1F, AO_0()				},
+#ifdef ARCH_i386_real
+/* STOSW	0xab		1					*/
+{ "stosw",	0xab,		OP1F, AO_0()				},
+#else
+/* STOSD	0xab		1					*/
+{ "stosd",	0xab,		OP1F, AO_0()				},
+#endif
+/* STR		0x0f00 /1	1     r/m16				*/
+/* FIXME implement */
+/* SUB		0x2c ib		1     al          imm8			*/
+{ "sub",	0x2c,		OP1F, AO_2(OP_al, OP_S8)		},
+/* SUB		0x2d iW		1     AX          immW			*/
+{ "sub",	0x2d,		OP1F, AO_2(OP_AX, OP_SW)		},
+/* SUB		0x28 /r		1     r/m8        r8			*/
+{ "sub",	0x28,		OP1F, AO_2(OP_RM8_D0, OP_R8_R)		},
+{ "sub",	0x28,		OP1F, AO_2(OP_RM8_D8, OP_R8_R)		},
+{ "sub",	0x28,		OP1F, AO_2(OP_RM8_DW, OP_R8_R)		},
+{ "sub",	0x28,		OP1F, AO_2(OP_RM8_R8, OP_R8_R)		},
+/* SUB		0x29 /r		1     r/mW        rW			*/
+{ "sub",	0x29,		OP1F, AO_2(OP_RMW_D0, OP_RW_R)		},
+{ "sub",	0x29,		OP1F, AO_2(OP_RMW_D8, OP_RW_R)		},
+{ "sub",	0x29,		OP1F, AO_2(OP_RMW_DW, OP_RW_R)		},
+{ "sub",	0x29,		OP1F, AO_2(OP_RMW_RW, OP_RW_R)		},
+/* SUB		0x2a /r		1     r8          r/m8			*/
+#if 1 /* FIXME probably doesn't work at the moment */
+{ "sub",	0x2a,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_D0_R)	},
+{ "sub",	0x2a,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_D8_R)	},
+{ "sub",	0x2a,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_DW_R)	},
+{ "sub",	0x2a,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_R8_R)	},
+#endif
+/* SUB		0x2b /r		1     rW          r/mW			*/
+#if 1 /* FIXME probably doesn't work at the moment */
+{ "sub",	0x2b,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_D0_R)	},
+{ "sub",	0x2b,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_D8_R)	},
+{ "sub",	0x2b,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_DW_R)	},
+{ "sub",	0x2b,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_RW_R)	},
+#endif
+/* SUB		0x80 /5 ib	1     r/m8        imm8			*/
+{ "subb",	0x80,		OP1F, AO_2(OP_RM8_D0+5, OP_S8)		},
+{ "subb",	0x80,		OP1F, AO_2(OP_RM8_D8+5, OP_S8)		},
+{ "subb",	0x80,		OP1F, AO_2(OP_RM8_DW+5, OP_S8)		},
+{ "sub",	0x80,		OP1F, AO_2(OP_RM8_R8+5, OP_S8)		},
+/* SUB		0x81 /5 iW	1     r/mW        immW			*/
+{ "sub",	0x81,		OP1F, AO_2(OP_RMW_D0+5, OP_SW)		},
+{ "sub",	0x81,		OP1F, AO_2(OP_RMW_D8+5, OP_SW)		},
+{ "sub",	0x81,		OP1F, AO_2(OP_RMW_DW+5, OP_SW)		},
+{ "sub",	0x81,		OP1F, AO_2(OP_RMW_RW+5, OP_SW)		},
+/* SUB		0x83 /5 ib	1     r/mW        imm8			*/
+{ "subb",	0x83,		OP1F, AO_2(OP_RMW_D0+5, OP_S8)		},
+{ "subb",	0x83,		OP1F, AO_2(OP_RMW_D8+5, OP_S8)		},
+{ "subb",	0x83,		OP1F, AO_2(OP_RMW_DW+5, OP_S8)		},
+{ "sub",	0x83,		OP1F, AO_2(OP_RMW_RW+5, OP_S8)		},
+/* TEST		0xa8 ib		1     al          imm8			*/
+{ "test",	0xa8,		OP1F, AO_2(OP_al, OP_S8)		},
+/* TEST		0xa9 iW		1     AX          immW			*/
+{ "test",	0xa9,		OP1F, AO_2(OP_AX, OP_SW)		},
+/* TEST		0xf6 /0 ib	1     r/m8        imm8			*/
+{ "testb",	0xf6,		OP1F, AO_2(OP_RM8_D0+0, OP_S8)		},
+{ "testb",	0xf6,		OP1F, AO_2(OP_RM8_D8+0, OP_S8)		},
+{ "testb",	0xf6,		OP1F, AO_2(OP_RM8_DW+0, OP_S8)		},
+{ "test",	0xf6,		OP1F, AO_2(OP_RM8_R8+0, OP_S8)		},
+/* TEST		0xf7 /0 iW	1     r/mW        immW			*/
+{ "test",	0xf7,		OP1F, AO_2(OP_RMW_D0+0, OP_SW)		},
+{ "test",	0xf7,		OP1F, AO_2(OP_RMW_D8+0, OP_SW)		},
+{ "test",	0xf7,		OP1F, AO_2(OP_RMW_DW+0, OP_SW)		},
+{ "test",	0xf7,		OP1F, AO_2(OP_RMW_RW+0, OP_SW)		},
+/* TEST		0x84 /r		1     r/m8        r8			*/
+#if 1 /* FIXME doesn't work */
+{ "testb",	0x84,		OP1F, AO_2(OP_RM8_D0, OP_R8_R)		},
+{ "testb",	0x84,		OP1F, AO_2(OP_RM8_D8, OP_R8_R)		},
+{ "testb",	0x84,		OP1F, AO_2(OP_RM8_DW, OP_R8_R)		},
+{ "test",	0x84,		OP1F, AO_2(OP_RM8_R8, OP_R8_R)		},
+#endif
+/* TEST		0x85 /r		1     r/mW        rW			*/
+#if 1 /* FIXME doesn't work */
+{ "test",	0x85,		OP1F, AO_2(OP_RMW_D0, OP_RW_R)		},
+{ "test",	0x85,		OP1F, AO_2(OP_RMW_D8, OP_RW_R)		},
+{ "test",	0x85,		OP1F, AO_2(OP_RMW_DW, OP_RW_R)		},
+{ "test",	0x85,		OP1F, AO_2(OP_RMW_RW, OP_RW_R)		},
+#endif
+/* UD2		0x0f0b		2					*/
+{ "ud2",	0x0f0b,		OP2F, AO_0()				},
+/* VERR		0x0f00 /4	2     r/m16				*/
+/* FIXME implement */
+/* VERW		0x0f00 /5	2     r/m16				*/
+/* FIXME implement */
+/* WAIT		0x9b		1					*/
+{ "wait",	0x9b,		OP1F, AO_0()				},
+/* WBINVD	0x0f09		2					*/
+{ "wbinvd",	0x0f09,		OP2F, AO_0()				},
+/* WRMSR	0x0f30		2					*/
+{ "wrmsr",	0x0f30,		OP2F, AO_0()				},
+/* XADD		0x0fc0 /r	2     r/m8        r8			*/
+{ "xadd",	0x0fc0,		OP2F, AO_2(OP_RM8_D0, OP_R8_R)		},
+{ "xadd",	0x0fc0,		OP2F, AO_2(OP_RM8_D8, OP_R8_R)		},
+{ "xadd",	0x0fc0,		OP2F, AO_2(OP_RM8_DW, OP_R8_R)		},
+{ "xadd",	0x0fc0,		OP2F, AO_2(OP_RM8_R8, OP_R8_R)		},
+/* XADD		0x0fc1 /r	2     r/mW        rW			*/
+{ "xadd",	0x0fc1,		OP2F, AO_2(OP_RMW_D0, OP_RW_R)		},
+{ "xadd",	0x0fc1,		OP2F, AO_2(OP_RMW_D8, OP_RW_R)		},
+{ "xadd",	0x0fc1,		OP2F, AO_2(OP_RMW_DW, OP_RW_R)		},
+{ "xadd",	0x0fc1,		OP2F, AO_2(OP_RMW_RW, OP_RW_R)		},
+/* XCHG		0x90 +rW	1     AX          rW			*/
+{ "xchg",	0x90,		OP1F, AO_2(OP_AX, OP_AX)		},
+{ "xchg",	0x91,		OP1F, AO_2(OP_AX, OP_CX)		},
+{ "xchg",	0x92,		OP1F, AO_2(OP_AX, OP_DX)		},
+{ "xchg",	0x93,		OP1F, AO_2(OP_AX, OP_BX)		},
+{ "xchg",	0x94,		OP1F, AO_2(OP_AX, OP_SP)		},
+{ "xchg",	0x95,		OP1F, AO_2(OP_AX, OP_BP)		},
+{ "xchg",	0x96,		OP1F, AO_2(OP_AX, OP_SI)		},
+{ "xchg",	0x97,		OP1F, AO_2(OP_AX, OP_DI)		},
+{ "xchg",	0x91,		OP1F, AO_2(OP_CX, OP_AX)		},
+{ "xchg",	0x92,		OP1F, AO_2(OP_DX, OP_AX)		},
+{ "xchg",	0x93,		OP1F, AO_2(OP_BX, OP_AX)		},
+{ "xchg",	0x94,		OP1F, AO_2(OP_SP, OP_AX)		},
+{ "xchg",	0x95,		OP1F, AO_2(OP_BP, OP_AX)		},
+{ "xchg",	0x96,		OP1F, AO_2(OP_SI, OP_AX)		},
+{ "xchg",	0x97,		OP1F, AO_2(OP_DI, OP_AX)		},
+/* XCHG		0x86 /r		1     r/m8        r8			*/
+{ "xchg",	0x86,		OP1F, AO_2(OP_RM8_D0, OP_R8_R)		},
+{ "xchg",	0x86,		OP1F, AO_2(OP_RM8_D8, OP_R8_R)		},
+{ "xchg",	0x86,		OP1F, AO_2(OP_RM8_DW, OP_R8_R)		},
+{ "xchg",	0x86,		OP1F, AO_2(OP_RM8_R8, OP_R8_R)		},
+/* XCHG		0x86 /r		1     r8          r/m8			*/
+#if 1 /* FIXME doesn't work at the moment */
+{ "xchg",	0x86,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_D0_R)	},
+{ "xchg",	0x86,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_D8_R)	},
+{ "xchg",	0x86,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_DW_R)	},
+{ "xchg",	0x86,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_R8_R)	},
+#endif
+/* XCHG		0x87 /r		1     r/mW        rW			*/
+{ "xchg",	0x87,		OP1F, AO_2(OP_RMW_D0, OP_RW_R)		},
+{ "xchg",	0x87,		OP1F, AO_2(OP_RMW_D8, OP_RW_R)		},
+{ "xchg",	0x87,		OP1F, AO_2(OP_RMW_DW, OP_RW_R)		},
+{ "xchg",	0x87,		OP1F, AO_2(OP_RMW_RW, OP_RW_R)		},
+/* XCHG		0x87 /r		1     rW          r/mW			*/
+#if 1 /* FIXME doesn't work at the moment */
+{ "xchg",	0x87,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_D0_R)	},
+{ "xchg",	0x87,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_D8_R)	},
+{ "xchg",	0x87,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_DW_R)	},
+{ "xchg",	0x87,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_RW_R)	},
+#endif
+/* XLAT		0xd7		1					*/
+{ "xlat",	0xd7,		OP1F, AO_0()				},
+/* XLATB	0xd7		1					*/
+{ "xlatb",	0xd7,		OP1F, AO_0()				},
+/* XOR		0x34 ib		1     al          imm8			*/
+{ "xor",	0x34,		OP1F, AO_2(OP_al, OP_S8)		},
+/* XOR		0x35 iW		1     AX          immW			*/
+{ "xor",	0x35,		OP1F, AO_2(OP_AX, OP_SW)		},
+/* XOR		0x30 /r		1     r/m8        r8			*/
+{ "xor",	0x30,		OP1F, AO_2(OP_RM8_D0, OP_R8_R)		},
+{ "xor",	0x30,		OP1F, AO_2(OP_RM8_D8, OP_R8_R)		},
+{ "xor",	0x30,		OP1F, AO_2(OP_RM8_DW, OP_R8_R)		},
+{ "xor",	0x30,		OP1F, AO_2(OP_RM8_R8, OP_R8_R)		},
+/* XOR		0x31 /r		1     r/mW        rW			*/
+{ "xor",	0x31,		OP1F, AO_2(OP_RMW_D0, OP_RW_R)		},
+{ "xor",	0x31,		OP1F, AO_2(OP_RMW_D8, OP_RW_R)		},
+{ "xor",	0x31,		OP1F, AO_2(OP_RMW_DW, OP_RW_R)		},
+{ "xor",	0x31,		OP1F, AO_2(OP_RMW_RW, OP_RW_R)		},
+/* XOR		0x32 /r		1     r8          r/m8			*/
+#if 1 /* FIXME doesn't work at the moment */
+{ "xor",	0x32,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_D0_R)	},
+{ "xor",	0x32,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_D8_R)	},
+{ "xor",	0x32,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_DW_R)	},
+{ "xor",	0x32,		OP1F, AO_2(OP_RM8_R8_R, OP_RM8_R8_R)	},
+#endif
+/* XOR		0x33 /r		1     rW          r/mW			*/
+#if 1 /* FIXME doesn't work at the moment */
+{ "xor",	0x33,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_D0_R)	},
+{ "xor",	0x33,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_D8_R)	},
+{ "xor",	0x33,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_DW_R)	},
+{ "xor",	0x33,		OP1F, AO_2(OP_RMW_RW_R, OP_RMW_RW_R)	},
+#endif
+/* XOR		0x80 /6 ib	1     r/m8        imm8			*/
+{ "xorb",	0x80,		OP1F, AO_2(OP_RM8_D0+6, OP_S8)		},
+{ "xorb",	0x80,		OP1F, AO_2(OP_RM8_D8+6, OP_S8)		},
+{ "xorb",	0x80,		OP1F, AO_2(OP_RM8_DW+6, OP_S8)		},
+{ "xor",	0x80,		OP1F, AO_2(OP_RM8_R8+6, OP_S8)		},
+/* XOR		0x81 /6 iW	1     r/mW        immW			*/
+{ "xor",	0x81,		OP1F, AO_2(OP_RMW_D0+6, OP_SW)		},
+{ "xor",	0x81,		OP1F, AO_2(OP_RMW_D8+6, OP_SW)		},
+{ "xor",	0x81,		OP1F, AO_2(OP_RMW_DW+6, OP_SW)		},
+{ "xor",	0x81,		OP1F, AO_2(OP_RMW_RW+6, OP_SW)		},
+/* XOR		0x83 /6 ib	1     r/mW        imm8			*/
+{ "xorb",	0x83,		OP1F, AO_2(OP_RMW_D0+6, OP_S8)		},
+{ "xorb",	0x83,		OP1F, AO_2(OP_RMW_D8+6, OP_S8)		},
+{ "xorb",	0x83,		OP1F, AO_2(OP_RMW_DW+6, OP_S8)		},
+{ "xor",	0x83,		OP1F, AO_2(OP_RMW_RW+6, OP_S8)		},

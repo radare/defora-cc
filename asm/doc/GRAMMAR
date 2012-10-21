@@ -1,0 +1,37 @@
+program:	{ section | statement }
+
+section:	"." section_name newline
+
+section_name:	WORD
+
+newline:	[ space ] NEWLINE
+
+space:		SPACE { SPACE }
+
+statement:	( function | space [ instruction ] ) newline
+
+function:	function_name [ space ] ":"
+
+function_name:	WORD
+
+instruction:	instruction_name [ space [ operand_list ] ]
+
+instruction_name:	WORD
+
+operand_list:	operand [ space ] { "," [ space ] operand [ space ] }
+
+operand:	value | address
+
+value:		symbol | register | immediate
+
+symbol:		WORD
+
+register:	"%" WORD
+
+immediate:	[ sign ] "$" NUMBER
+
+address:	"[" [ space ] [ sign [ space ] ] value [ space ] [ offset [ space ] ] "]"
+
+sign:		( "+" | "-" )
+
+offset:		sign [ space ] value

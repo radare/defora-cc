@@ -1,0 +1,9 @@
+/* $Id$ */
+REG(mm0, 64,	0x00)
+REG(mm1, 64,	0x01)
+REG(mm2, 64,	0x02)
+REG(mm3, 64,	0x03)
+REG(mm4, 64,	0x04)
+REG(mm5, 64,	0x05)
+REG(mm6, 64,	0x06)
+REG(mm7, 64,	0x07)

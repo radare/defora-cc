@@ -1,0 +1,3 @@
+/* XXX "identifier.set" is handled in expression_or_labeled_statement instead */
+	C99_CODE_KEYWORD_CASE,
+	C99_CODE_KEYWORD_DEFAULT,
