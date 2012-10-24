@@ -262,7 +262,7 @@ Code * code_new(C99Prefs const * prefs, C99Helper * helper,
 	return code;
 }
 
-#include "/Users/pancake/prg/defora/c99/src/target/graph.c"
+#include "../src/target/graph.c"
 
 static int _new_target(Code * code, char const * target,
 		C99Option const * options, size_t options_cnt)

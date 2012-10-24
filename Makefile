@@ -5,7 +5,7 @@ C99MAIN=c99/src/main.c
 #compile cpp
 CPPMAIN=cpp/src/main.c
 
-CFLAGS=-Ic99/include -Icpp/include
+CFLAGS=-Ic99/include -Icpp/include -IlibSystem/include
 CFLAGS+=-DTC_NULL=0 -g -ggdb
 CFLAGS+=-I../../../System/src/libSystem/include/
 SRC+=libSystem/src/object.c
@@ -40,6 +40,7 @@ all: asm c99 cpp libSystem
 	${CC} ${CFLAGS} ${SRC} -ldl ${C99MAIN} -o _c99 
 	${CC} ${CFLAGS} ${SRC} -ldl ${CPPMAIN} -o _cpp
 	${CC} ${CFLAGS} ${ASM} -ldl ${ARMMAIN} -o _arm
+	${CC} ${CFLAGS} ${ASM} -ldl ${X64MAIN} -o _x64
 
 clean:
 	rm -f _c99 _cpp 
