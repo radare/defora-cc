@@ -43,7 +43,7 @@ all: asm c99 cpp libSystem
 	${CC} ${CFLAGS} ${ASM} -ldl ${X64MAIN} -o _x64
 
 clean:
-	rm -f _c99 _cpp 
+	rm -f _c99 _cpp _x64 _arm
 
 asm:
 	sh gitclonedir.sh DeforaOS/DeforaOS/Apps/Devel/src/asm
