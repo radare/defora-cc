@@ -25,12 +25,16 @@
 #include "token.h"
 #include "parser.h"
 
+#define USE_CPP 1
+
 
 /* private */
 /* types */
 typedef struct _State
 {
+#if USE_CPP
 	Cpp * cpp;
+#endif
 	Token * token;
 	unsigned int error_cnt;
 	unsigned int warning_cnt;

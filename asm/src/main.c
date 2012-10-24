@@ -30,9 +30,8 @@
 /* constants */
 # define ASM_FILENAME_DEFAULT "a.out"
 
-
 /* prototypes */
-static int _asm(AsmPrefs * prefs, char const * arch, char const * format,
+static int rr_asm(AsmPrefs * prefs, char const * arch, char const * format,
 		char const * infile, char const * outfile);
 static int _asm_string(AsmPrefs * prefs, char const * arch, char const * format,
 		char const * outfile, char const * string);
@@ -40,7 +39,7 @@ static int _asm_string(AsmPrefs * prefs, char const * arch, char const * format,
 
 /* functions */
 /* asm */
-static int _asm(AsmPrefs * prefs, char const * arch, char const * format,
+static int rr_asm(AsmPrefs * prefs, char const * arch, char const * format,
 		char const * infile, char const * outfile)
 {
 	int ret = 0;
@@ -142,7 +141,7 @@ int main(int argc, char * argv[])
 						string) == 0) ? 0 : 2;
 	}
 	else if(optind == argc - 1)
-		ret = (_asm(&prefs, arch, format, argv[optind], outfile) == 0)
+		ret = (rr_asm(&prefs, arch, format, argv[optind], outfile) == 0)
 			? 0 : 2;
 	else
 		ret = _usage();

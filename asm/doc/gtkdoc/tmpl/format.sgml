@@ -20,6 +20,30 @@ AsmFormat
 <!-- ##### SECTION Image ##### -->
 
 
+<!-- ##### STRUCT AsmFormat ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### STRUCT AsmFormatPlugin ##### -->
+<para>
+
+</para>
+
+@helper: 
+@name: 
+@signature: 
+@signature_len: 
+@init: 
+@exit: 
+@function: 
+@section: 
+@detect: 
+@decode: 
+@decode_section: 
+@priv: 
+
 <!-- ##### USER_FUNCTION decode ##### -->
 <para>
 

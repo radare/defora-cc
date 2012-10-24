@@ -24,11 +24,22 @@ SRC+=cpp/src/parser.c
 SRC+=cpp/src/scanner.c
 
 
+ASM=cpp/src/cpp.c cpp/src/parser.c cpp/src/scanner.c asm/src/asm.c
+ASM+=asm/src/main.c asm/src/code.c asm/src/arch.c asm/src/format.c
+ASM+=asm/src/parser.c asm/src/token.c
+ASM+=libSystem/src/object.c
+ASM+=libSystem/src/error.c libSystem/src/plugin.c libSystem/src/string.c 
+ASM+=libSystem/src/token.c libSystem/src/parser.c 
+ARMMAIN=asm/src/arch/armeb.c 
+X64MAIN=asm/src/arch/amd64.c 
+
 #CFLAGS+=-DCPP_CODE_NULL=NULL
+ASM+=-Iasm/include -Icpp/include
 
 all: asm c99 cpp libSystem
 	${CC} ${CFLAGS} ${SRC} -ldl ${C99MAIN} -o _c99 
 	${CC} ${CFLAGS} ${SRC} -ldl ${CPPMAIN} -o _cpp
+	${CC} ${CFLAGS} ${ASM} -ldl ${ARMMAIN} -o _arm
 
 clean:
 	rm -f _c99 _cpp 

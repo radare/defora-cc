@@ -260,6 +260,54 @@ AsmArch
 @id: 
 
 
+<!-- ##### STRUCT AsmArch ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### ENUM AsmArchEndian ##### -->
+<para>
+
+</para>
+
+@ASM_ARCH_ENDIAN_BIG: 
+@ASM_ARCH_ENDIAN_LITTLE: 
+@ASM_ARCH_ENDIAN_BOTH: 
+
+<!-- ##### TYPEDEF AsmArchOperandDefinition ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### ENUM AsmArchOperandType ##### -->
+<para>
+
+</para>
+
+@AOT_NONE: 
+@AOT_CONSTANT: 
+@AOT_IMMEDIATE: 
+@AOT_REGISTER: 
+@AOT_DREGISTER: 
+@AOT_DREGISTER2: 
+
+<!-- ##### STRUCT AsmArchPlugin ##### -->
+<para>
+
+</para>
+
+@helper: 
+@name: 
+@description: 
+@registers: 
+@instructions: 
+@init: 
+@exit: 
+@encode: 
+@decode: 
+
 <!-- ##### USER_FUNCTION get_filename ##### -->
 <para>
 
